@@ -79,7 +79,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-transparent bg-clip-text sm:text-5xl md:text-6xl">
-            ✨ AI Job Assistant ✨
+            ✨ ApplyMate ✨
           </h1>
           <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600">
             Your magical career companion. Get expert guidance on resumes, interviews, and career development!

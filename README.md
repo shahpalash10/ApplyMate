@@ -1,4 +1,4 @@
-# AI Job Assistant
+# ApplyMate
 
 A full-stack AI-powered job search and resume building application built with Next.js and Gemini AI.
 
@@ -27,8 +27,8 @@ A full-stack AI-powered job search and resume building application built with Ne
 1. **Clone the repository**
 
 ```bash
-git clone https://github.com/your-username/ai-job-assistant.git
-cd ai-job-assistant
+git clone https://github.com/your-username/applymate.git
+cd applymate
 ```
 
 2. **Install dependencies**

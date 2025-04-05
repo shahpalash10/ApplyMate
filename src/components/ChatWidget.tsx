@@ -69,8 +69,8 @@ export default function ChatWidget() {
 
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-96 h-[600px] bg-white rounded-lg shadow-xl flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b">
-            <h3 className="text-lg font-semibold">AI Job Assistant</h3>
+          <div className="p-4 border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 rounded-t-lg flex justify-between items-center">
+            <h3 className="text-lg font-semibold">ApplyMate</h3>
             <button
               onClick={() => setIsOpen(false)}
               className="text-gray-500 hover:text-gray-700"

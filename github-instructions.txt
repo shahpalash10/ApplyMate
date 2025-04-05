@@ -1,0 +1,39 @@
+## GitHub Setup Instructions
+
+1. Go to GitHub.com and sign in to your account
+
+2. Click on the "+" icon in the top right corner and select "New repository"
+
+3. Fill in the repository details:
+   - Repository name: ai-job-assistant
+   - Description: A full-stack AI-powered job search and resume building application
+   - Choose visibility (Public or Private)
+   - Do NOT initialize with README, .gitignore, or license since we already have those
+
+4. Click "Create repository"
+
+5. Once created, GitHub will show you commands to push your existing repository
+   Run the following commands in your terminal:
+
+```bash
+# Add the GitHub repository as a remote
+git remote add origin https://github.com/YOUR_USERNAME/ai-job-assistant.git
+
+# Push your commits to GitHub
+git push -u origin main
+```
+
+Replace "YOUR_USERNAME" with your actual GitHub username.
+
+6. Your code should now be on GitHub! You can view it by visiting:
+   https://github.com/YOUR_USERNAME/ai-job-assistant
+
+7. Optional: To add screenshots
+   - Take screenshots of your application
+   - Save them in the screenshots folder
+   - Push the changes to GitHub:
+   ```bash
+   git add screenshots/
+   git commit -m "Add application screenshots"
+   git push
+   ``` 
