@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     let result;
     
     if (isResumeRequest && resumeData) {
-      // Generate a professional resume with the provided data with a fun, magical tone
-      const resumePrompt = `Create a professional resume in Markdown format using the following information:
+      // Generate a professional resume with the provided data
+      const resumePrompt = `Create a professional ATS-friendly resume using the following information:
 Name: ${resumeData.name}
 Email: ${resumeData.email}
 Phone: ${resumeData.phone}
@@ -31,22 +31,74 @@ Skills: ${resumeData.skills}
 Projects: ${resumeData.projects}
 Certifications: ${resumeData.certifications}
 
-Please organize the resume with the following sections:
-1. Summary - Write a compelling professional summary based on their experience and skills
-2. Education - Format their education details properly
-3. Work Experience - Format their work experience with bullet points highlighting achievements
-4. Skills - List their skills organized by category
-5. Projects - Format their projects with descriptions
-6. Certifications - List their certifications
+First, organize this information into a structured JSON format using this schema:
+{
+  "name": "",
+  "contact": {
+    "email": "",
+    "phone": "",
+    "location": "Extract location from education or experience if available",
+    "linkedin": ""
+  },
+  "objective": "Generate a professional objective based on their skills and experience (2-3 lines)",
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "start": "",
+      "end": "",
+      "grade": ""
+    }
+  ],
+  "projects": [
+    {
+      "title": "",
+      "description": "",
+      "tech": []
+    }
+  ],
+  "skills": [],
+  "certifications": []
+}
 
-IMPORTANT STYLE INSTRUCTIONS:
-- The resume should be professional but with engaging language
-- Use vivid action verbs and descriptive phrasing to bring their experience to life
-- Make achievements stand out with specific metrics where possible
-- Keep the overall tone professional but energetic and confident
-- Format everything clearly with proper markdown (headings, bullet points, etc.)
+After creating the JSON, convert it into a Markdown-formatted resume using this layout:
 
-Return ONLY the markdown-formatted resume content that can be directly converted to PDF.`;
+# {name}
+
+**Email**: {contact.email} | **Phone**: {contact.phone} | **Location**: {contact.location} | **LinkedIn**: {contact.linkedin}
+
+## Professional Summary
+{objective}
+
+## Education
+For each education item:
+**{institution}** — {degree}  
+*{start} - {end}*, Grade: {grade}
+
+## Projects
+For each project:
+**{title}**  
+{description}  
+_Technologies: {tech joined by commas}_
+
+## Skills
+Create a clean, organized list of skills grouped by category when possible.
+
+## Certifications
+List the certifications in a clean format.
+
+IMPORTANT ATS-FRIENDLY FORMATTING INSTRUCTIONS:
+- Use proper spacing between sections (at least one blank line)
+- Use standard section headers (##) for each main section
+- Use bold formatting for job titles, institutions, and project names
+- Focus on relevant keywords from the candidate's industry
+- Ensure all information is clearly formatted and easy to scan
+- Keep the layout simple with a single-column format
+- Make sure the contact information at the top has proper spacing
+- Use bullet points for lists where appropriate
+- Do NOT include any non-standard characters that could confuse ATS parsers
+
+Return ONLY the markdown-formatted resume content that can be directly converted to PDF. Do not include the JSON in your response.`;
 
       result = await model.generateContent(resumePrompt);
     } else {

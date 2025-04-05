@@ -43,7 +43,7 @@ export default function ConversationalResumeBuilder() {
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 'welcome',
-      text: "I'm your Resume Wizard! ✨ What's your name? (Type 'none' to skip any field or 'generate' anytime to create your resume)", 
+      text: "I'm your Resume Wizard! ✨ I'll help you create an ATS-friendly resume. What's your name? (Type 'none' to skip any field or 'generate' anytime to create your resume)", 
       isUser: false 
     }
   ]);
@@ -56,7 +56,16 @@ export default function ConversationalResumeBuilder() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toPDF, targetRef } = usePDF({
-    filename: `${resumeData.name.replace(/\s+/g, '_') || 'resume'}_resume.pdf`,
+    filename: `${resumeData.name.replace(/\s+/g, '_') || 'resume'}_ATS_resume.pdf`,
+    page: {
+      margin: 25,
+      format: 'letter',
+      orientation: 'portrait',
+    },
+    canvas: {
+      mimeType: 'image/png',
+      qualityRatio: 1
+    },
   });
 
   useEffect(() => {
@@ -292,6 +301,19 @@ export default function ConversationalResumeBuilder() {
           updated.certifications = message;
           updated.collectedFields = [...prev.collectedFields, 'certifications'];
         }
+        // Look for location information in the message
+        else if (message.length > 10 && 
+                 (lowerMessage.includes('live in') || lowerMessage.includes('located in') || 
+                  lowerMessage.includes('based in') || lowerMessage.includes('from '))) {
+          // If there's a location in the message, add it to the experience field for the resume generator
+          // This is a simple approach - the AI will extract the location when generating the resume
+          if (!prev.collectedFields.includes('experience')) {
+            updated.experience = `Location: ${message}`;
+            updated.collectedFields = [...prev.collectedFields, 'experience'];
+          } else {
+            updated.experience = `${prev.experience}. Location: ${message}`;
+          }
+        }
       }
       
       return updated;
@@ -397,7 +419,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
     const generatingMessageId = `generating-${Date.now()}`;
     setMessages(prev => [...prev, { 
       id: generatingMessageId,
-      text: "Creating your resume now... ✨", 
+      text: "Creating your ATS-friendly resume now... ✨", 
       isUser: false 
     }]);
     
@@ -422,7 +444,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
         const readyMessageId = `ready-${Date.now()}`;
         setMessages(prev => [...prev, { 
           id: readyMessageId,
-          text: "Your resume is ready! Check it out below! 🎉", 
+          text: "Your ATS-friendly resume is ready! Check it out below and download the PDF for applications! 🎉", 
           isUser: false 
         }]);
       }
@@ -457,7 +479,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
     const newMessageId = `welcome-new-${Date.now()}`;
     setMessages([{ 
       id: newMessageId,
-      text: "Let's start fresh! What's your name? ✨ (Type 'none' to skip any field or 'generate' anytime to create your resume)", 
+      text: "Let's start fresh! I'll help you create an ATS-friendly resume. What's your name? ✨ (Type 'none' to skip any field or 'generate' anytime to create your resume)", 
       isUser: false 
     }]);
   };
@@ -529,7 +551,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Your Generated Resume
+              Your ATS-Friendly Resume
             </h3>
             <button
               onClick={() => toPDF()}
@@ -538,14 +560,14 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
-              Download PDF
+              Download ATS-Friendly PDF
             </button>
           </div>
           <div 
             ref={targetRef} 
-            className="border border-gray-200 rounded-lg p-8 bg-white max-h-[400px] overflow-y-auto shadow-inner"
+            className="border border-gray-200 rounded-lg p-8 bg-white max-h-[600px] overflow-y-auto shadow-inner mt-4"
           >
-            <div className="prose prose-black text-black max-w-none">
+            <div className="prose prose-black text-black max-w-none pt-4 prose-headings:mb-4 prose-headings:mt-6 prose-p:my-2 prose-li:my-0 prose-h1:text-3xl prose-h2:text-xl prose-h2:border-b prose-h2:pb-2 prose-h2:border-gray-200">
               <ReactMarkdown>{generatedResume}</ReactMarkdown>
             </div>
           </div>

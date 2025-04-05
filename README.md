@@ -1,62 +1,106 @@
-# ApplyMate
+# ApplyMate - Your Career Companion
 
-A full-stack AI-powered job search and resume building application built with Next.js and Gemini AI.
+✨ ApplyMate is an AI-powered career assistant that helps users with every aspect of their job search and career development journey.
 
 ## Features
 
-- **Resume Wizard**: Create professional resumes with conversational AI
-- **Job Search**: Search for jobs across multiple platforms (LinkedIn, Naukri, Internshala, Unstop)
-- **AI-Enhanced Job Listings**: Get match scores, recommendations, and difficulty ratings for each job
-- **Conversational Interface**: Natural language interaction for resume building
-- **Responsive Design**: Works on desktop and mobile devices
-
-## Tech Stack
-
-- **Frontend**: Next.js, React, Tailwind CSS
-- **Backend**: Next.js API Routes
-- **AI**: Google Gemini 1.5 Flash
-- **Web Scraping**: Axios, Cheerio
-
-## Screenshots
-
-![Job Search Interface](screenshots/job-search.png)
-![Resume Builder](screenshots/resume-builder.png)
+- **✨ Resume Wizard** - Create ATS-friendly resumes with AI assistance
+- **Cover Letter Generator** - Generate customized cover letters for specific job positions
+- **Job Search Wizard** - Search job listings from multiple sources (LinkedIn, Indeed, and more)
+- **Skill Development Hub** - Discover in-demand skills and learning resources
+- **Career Path Planning** - Explore career paths and get personalized roadmaps
+- **Interview Preparation** (External) - Practice interview questions
 
 ## Getting Started
 
-1. **Clone the repository**
+### Prerequisites
 
+- Node.js 18+ and npm
+
+### Installation
+
+1. Clone the repository
 ```bash
-git clone https://github.com/your-username/applymate.git
+git clone https://github.com/yourusername/applymate.git
 cd applymate
 ```
 
-2. **Install dependencies**
-
+2. Install dependencies
 ```bash
 npm install
 ```
 
-3. **Set up environment variables**
-
-Create a `.env.local` file in the root directory with the following:
-
+3. Set up environment variables
+Create a `.env.local` file in the root directory and add:
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key
 ```
 
-4. **Run the development server**
-
+4. Run the development server
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Usage
+## Tech Stack
 
-- **Job Search**: Navigate to the Job Search page, enter a job title, optional location and experience, and click "Find Jobs"
-- **Resume Builder**: Use the Resume Wizard to create a professional resume through a conversational interface
+- **Next.js** - React framework
+- **TailwindCSS** - Utility-first CSS framework
+- **Google Gemini API** - For AI-powered content generation
+- **TypeScript** - For type safety
+
+## Project Structure
+
+```
+src/
+├── app/                    # Pages and routes
+│   ├── api/                # API endpoints
+│   ├── career-path/        # Career path planning
+│   ├── cover-letter/       # Cover letter generator
+│   ├── jobs/               # Job search
+│   ├── resume/             # Resume wizard
+│   └── skill-development/  # Skill development resources
+├── components/             # Reusable UI components
+└── styles/                 # Global styles and CSS modules
+```
+
+## Features in Detail
+
+### Resume Wizard
+AI-powered resume builder that helps users create professional, ATS-friendly resumes. Features include:
+- Conversational AI guidance
+- ATS optimization
+- Professional templates
+- Real-time editing and preview
+
+### Cover Letter Generator
+Create personalized cover letters tailored to specific job descriptions:
+- ATS-friendly formatting
+- Customized content based on user skills
+- Professional tone and language
+- Fully editable and downloadable
+
+### Job Search Wizard
+Find relevant job listings from multiple sources:
+- Multi-platform search (LinkedIn, Indeed)
+- Filter by location, experience level, and source
+- One-click apply buttons
+- Generate cover letters for specific jobs
+
+### Skill Development
+Explore in-demand skills and find learning resources:
+- Browse skills by category
+- View market demand and difficulty ratings
+- Access free and paid learning resources
+- Connect with career path planning
+
+### Career Path Planning
+Get guidance on career progression:
+- Career assessment tool
+- Detailed path information
+- Skills required for each path
+- Step-by-step roadmap
 
 ## Contributing
 

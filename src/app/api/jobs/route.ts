@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       scrapeUnstop(query, location),
       scrapeNaukri(query, location, experience),
       scrapeLinkedIn(query, location, experience),
+      scrapeIndeed(query, location, experience),
       // Add more job sites as needed
     ]);
 
@@ -71,12 +72,16 @@ async function scrapeInternshala(query: string, location?: string): Promise<JobL
     const jobs: JobListing[] = [];
     
     // Extract job listings - adjust selectors based on Internshala's HTML structure
-    $('.individual_internship').each((index: number, element: Element) => {
+    $('.individual_internship').each((_, element) => {
       const title = $(element).find('.heading_4_5').text().trim();
       const company = $(element).find('.company_name').text().trim();
       const locationText = $(element).find('.location_link').text().trim();
       const salary = $(element).find('.stipend').text().trim();
-      const link = 'https://internshala.com' + $(element).find('a.view_detail_button').attr('href');
+      
+      // Get href attribute and ensure it's a complete URL
+      let linkHref = $(element).find('a.view_detail_button').attr('href') || '';
+      // Check if link is relative and make it absolute
+      const link = linkHref.startsWith('http') ? linkHref : `https://internshala.com${linkHref}`;
       
       // Only add jobs that match location if specified
       if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
@@ -115,12 +120,16 @@ async function scrapeUnstop(query: string, location?: string): Promise<JobListin
     const jobs: JobListing[] = [];
     
     // Extract job listings - adjust selectors based on Unstop's HTML structure
-    $('.opportunity-card').each((index: number, element: Element) => {
+    $('.opportunity-card').each((_, element) => {
       const title = $(element).find('.opportunity-title').text().trim();
       const company = $(element).find('.company-name').text().trim();
       const locationText = $(element).find('.location-text').text().trim();
       const salary = $(element).find('.stipend-text').text().trim() || 'Not specified';
-      const link = 'https://unstop.com' + $(element).find('a.card-link').attr('href');
+      
+      // Get href attribute and ensure it's a complete URL
+      let linkHref = $(element).find('a.card-link').attr('href') || '';
+      // Check if link is relative and make it absolute
+      const link = linkHref.startsWith('http') ? linkHref : `https://unstop.com${linkHref}`;
       
       // Only add jobs that match location if specified
       if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
@@ -178,14 +187,16 @@ async function scrapeNaukri(query: string, location?: string, experience?: strin
     const jobs: JobListing[] = [];
     
     // Extract job listings
-    $('.jobTuple').each((index: number, element: Element) => {
+    $('.jobTuple').each((_, element) => {
       const title = $(element).find('.title').text().trim();
       const company = $(element).find('.companyInfo span.subTitle').text().trim();
       const locationText = $(element).find('.subTitle.ellipsis.fleft.location').text().trim();
       const salary = $(element).find('.salary').text().trim() || 'Not specified';
       
-      // Try to find the job URL
-      const link = $(element).find('a.title').attr('href') || '';
+      // Try to find the job URL and ensure it's a complete URL
+      let linkHref = $(element).find('a.title').attr('href') || '';
+      // Ensure the link is a complete URL
+      const link = linkHref.startsWith('http') ? linkHref : `https://www.naukri.com${linkHref}`;
       
       // Only add jobs that match location if specified
       if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
@@ -243,14 +254,16 @@ async function scrapeLinkedIn(query: string, location?: string, experience?: str
     const jobs: JobListing[] = [];
     
     // Extract job listings - LinkedIn has complex structure and may require updates
-    $('.base-card.relative.job-search-card').each((index: number, element: Element) => {
+    $('.base-card.relative.job-search-card').each((_, element) => {
       const title = $(element).find('.base-search-card__title').text().trim();
       const company = $(element).find('.base-search-card__subtitle').text().trim();
       const locationText = $(element).find('.job-search-card__location').text().trim();
       const salary = 'Check on LinkedIn'; // LinkedIn often doesn't show salary
       
-      // Get the job link
-      const link = $(element).find('a.base-card__full-link').attr('href') || '';
+      // Get the job link and ensure it's a complete URL
+      let linkHref = $(element).find('a.base-card__full-link').attr('href') || '';
+      // Ensure we have a complete URL
+      const link = linkHref;
       
       // Only add jobs that match location if specified and have required info
       if (title && company && (!location || locationText.toLowerCase().includes(location.toLowerCase()))) {
@@ -272,6 +285,72 @@ async function scrapeLinkedIn(query: string, location?: string, experience?: str
   }
 }
 
+async function scrapeIndeed(query: string, location?: string, experience?: string): Promise<JobListing[]> {
+  try {
+    // Format the query for Indeed URL
+    const formattedQuery = query.toLowerCase().replace(/\s+/g, '+');
+    let url = `https://www.indeed.com/jobs?q=${formattedQuery}`;
+    
+    if (location) {
+      url += `&l=${location.toLowerCase().replace(/\s+/g, '+')}`;
+    }
+    
+    if (experience) {
+      // Map experience to Indeed's format if applicable
+      // Indeed doesn't have a direct experience filter in the URL, but we can add keywords
+      if (experience.includes('fresher') || experience.includes('0-1')) {
+        url += '&sc=0kf%3Aattr(FSME%2CEXREC)%3B';  // Entry level filter
+      }
+    }
+    
+    console.log(`Scraping Indeed: ${url}`);
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    const $ = cheerio.load(response.data);
+    
+    const jobs: JobListing[] = [];
+    
+    // Extract job listings from Indeed
+    $('.job_seen_beacon').each((_, element) => {
+      const title = $(element).find('.jobTitle span').text().trim() || 
+                    $(element).find('[data-testid="jobTitle"]').text().trim();
+      const company = $(element).find('.companyName').text().trim() || 
+                      $(element).find('[data-testid="company-name"]').text().trim();
+      const locationText = $(element).find('.companyLocation').text().trim();
+      
+      // Try to extract salary if available
+      const salary = $(element).find('.salary-snippet-container').text().trim() || 
+                     $(element).find('[data-testid="attribute_snippet_testid"]').text().trim() || 
+                     'Not specified';
+      
+      // Get the job link and ensure it's a complete URL
+      let jobId = $(element).attr('data-jk') || $(element).attr('id')?.replace('job_', '') || '';
+      // Construct the job URL
+      const link = jobId ? `https://www.indeed.com/viewjob?jk=${jobId}` : '';
+      
+      // Only add jobs that have valid data and match location if specified
+      if (title && company && link && (!location || locationText.toLowerCase().includes(location.toLowerCase()))) {
+        jobs.push({
+          title,
+          company,
+          location: locationText,
+          salary,
+          link,
+          source: 'Indeed'
+        });
+      }
+    });
+    
+    return jobs;
+  } catch (error) {
+    console.error('Error scraping Indeed:', error);
+    return [];
+  }
+}
+
 async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experience?: string): Promise<JobListing[]> {
   try {
     // Skip if no jobs found
@@ -283,7 +362,7 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     // Process jobs in batches to avoid overwhelming Gemini API
-    const batches = [];
+    const batches: JobListing[][] = [];
     for (let i = 0; i < jobs.length; i += 5) {
       batches.push(jobs.slice(i, i + 5));
     }
@@ -362,7 +441,7 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
       company: 'TechCorp',
       location: 'Bangalore, India',
       salary: '₹10-15 LPA',
-      link: 'https://example.com/job1',
+      link: 'https://www.naukri.com/software-engineer-jobs',
       source: 'Naukri',
       match_score: 95,
       recommendations: 'This role aligns well with your skills. Highlight your experience with cloud technologies.',
@@ -374,7 +453,7 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
       company: 'InnovateX',
       location: 'Remote',
       salary: '₹18-25 LPA',
-      link: 'https://example.com/job2',
+      link: 'https://www.linkedin.com/jobs/search/?keywords=senior',
       source: 'LinkedIn',
       match_score: 88,
       recommendations: 'Excellent opportunity for growth. Emphasize your leadership skills in your application.',
@@ -386,7 +465,7 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
       company: 'StartupHub',
       location: 'Delhi, India',
       salary: '₹25-30K per month',
-      link: 'https://example.com/job3',
+      link: 'https://internshala.com/internships/internship-in-delhi',
       source: 'Internshala',
       match_score: 75,
       recommendations: 'Great for beginners. Focus on your academic projects in your application.',
@@ -398,12 +477,24 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
       company: 'GrowthLabs',
       location: 'Hyderabad, India',
       salary: '₹6-8 LPA',
-      link: 'https://example.com/job4',
+      link: 'https://unstop.com/jobs',
       source: 'Unstop',
       match_score: 85,
       recommendations: 'Solid opportunity for early career professionals. Highlight your problem-solving skills.',
       difficulty: 'Medium',
       keywords: ['Entry-level', 'Problem Solving']
+    },
+    {
+      title: `${query} Developer`,
+      company: 'GlobalTech',
+      location: 'Mumbai, India',
+      salary: '₹12-18 LPA',
+      link: 'https://www.indeed.com/jobs?q=developer',
+      source: 'Indeed',
+      match_score: 90,
+      recommendations: 'Strong technical opportunity with growth potential. Emphasize your coding skills and project experience.',
+      difficulty: 'Medium',
+      keywords: ['Developer', 'Coding', 'Technical']
     }
   ];
   

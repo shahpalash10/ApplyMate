@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import CoverLetterModal from './CoverLetterModal';
 
 interface JobListing {
   title: string;
@@ -30,8 +31,11 @@ export default function JobScraper() {
     Internshala: true,
     Unstop: true,
     Naukri: true,
-    LinkedIn: true
+    LinkedIn: true,
+    Indeed: true
   });
+  const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Filter jobs when source filters or jobs change
@@ -102,6 +106,41 @@ export default function JobScraper() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openCoverLetterModal = (job?: JobListing) => {
+    // If no job is provided or job title is missing, create an empty job object
+    // to allow the user to manually enter job details
+    const defaultJob: JobListing = {
+      title: '',
+      company: '',
+      location: '',
+      salary: '',
+      link: '',
+      source: ''
+    };
+    
+    // Use the provided job or the default empty job
+    const jobData = job || defaultJob;
+    
+    // Log for debugging
+    console.log("Opening cover letter modal with job:", JSON.stringify(jobData, null, 2));
+    
+    // Create a sanitized version with guaranteed values (even if empty)
+    setSelectedJob({
+      ...jobData,
+      title: jobData.title?.trim() || '',
+      company: (jobData.company?.trim()) || '',
+      location: (jobData.location?.trim()) || '',
+      keywords: Array.isArray(jobData.keywords) ? jobData.keywords : 
+                (jobData.keywords ? [String(jobData.keywords)] : [])
+    });
+    
+    setCoverLetterModalOpen(true);
+  };
+
+  const closeCoverLetterModal = () => {
+    setCoverLetterModalOpen(false);
   };
 
   return (
@@ -208,7 +247,7 @@ export default function JobScraper() {
               <p className="text-gray-600">Crawling multiple job sites to find the best matches for you...</p>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {Object.keys(sourceFilters).map(source => (
                 <div key={source} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
                   <div className="flex justify-between items-center mb-2">
@@ -239,25 +278,46 @@ export default function JobScraper() {
         
         {jobs.length > 0 && (
           <div className="space-y-4 md:space-y-6">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-medium text-gray-900">Found {filteredJobs.length} job listings</h3>
+              
+              <button
+                onClick={() => openCoverLetterModal()}
+                className="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-indigo-600 rounded-md text-sm hover:bg-indigo-50 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Create Cover Letter
+              </button>
+            </div>
+            
             <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between sticky top-0 bg-white p-3 md:p-4 rounded-lg shadow-sm z-10 border border-gray-100">
               <div className="text-base md:text-lg font-medium text-gray-800 mb-2">
                 Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching your search
               </div>
               
               <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                <div className="flex flex-wrap gap-2 mb-2 md:mb-0">
-                  <span className="text-xs md:text-sm text-gray-600">Filter:</span>
-                  {Object.keys(sourceFilters).map(source => (
-                    <button
+                <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
+                  {Object.entries(sourceFilters).map(([source, isActive]) => (
+                    <button 
                       key={source}
                       onClick={() => handleSourceFilterChange(source)}
-                      className={`px-2 md:px-3 py-1 text-xs rounded-full transition-colors ${
-                        sourceFilters[source] 
-                          ? 'bg-blue-100 text-blue-800 border border-blue-200' 
-                          : 'bg-gray-100 text-gray-500 border border-gray-200'
+                      className={`px-2 py-1 rounded-md text-xs flex items-center ${
+                        isActive 
+                          ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200' 
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                       }`}
                     >
-                      {source} ({sourceCounts[source] || 0}) {sourceFilters[source] ? '✓' : ''}
+                      <span className={`w-2 h-2 rounded-full mr-1 ${isActive ? 'bg-indigo-500' : 'bg-gray-400'}`}></span>
+                      {source}
+                      {sourceCounts[source] > 0 && (
+                        <span className={`ml-1 px-1 rounded-full text-xs ${
+                          isActive ? 'bg-indigo-200 text-indigo-800' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {sourceCounts[source]}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -365,18 +425,48 @@ export default function JobScraper() {
                         </div>
                       )}
                       
-                      <div className="mt-3 pt-2 border-t border-gray-100 flex justify-end">
-                        <a 
-                          href={job.link} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 border border-transparent rounded-md shadow-sm text-xs md:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          Apply Now
-                        </a>
+                      <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs text-gray-500 inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Source: {job.source}
+                          </span>
+                          <button
+                            onClick={() => openCoverLetterModal(job)}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
+                            aria-label={`Generate cover letter for ${job.title} at ${job.company}`}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Generate Cover Letter
+                          </button>
+                        </div>
+                        {job.link && (
+                          <a 
+                            href={job.link.startsWith('http') ? job.link : `https://${job.link}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 border border-transparent rounded-md shadow-sm text-xs md:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                            onClick={(e) => {
+                              // Validate the URL before attempting to open
+                              try {
+                                // Check if we have a valid URL
+                                new URL(job.link.startsWith('http') ? job.link : `https://${job.link}`);
+                              } catch (error) {
+                                e.preventDefault();
+                                alert("Sorry, this job listing has an invalid link. Try visiting the job source's website directly.");
+                              }
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            Apply Now
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -387,9 +477,35 @@ export default function JobScraper() {
                 </div>
               )}
             </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4 mb-8">
+              <div className="flex items-start">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-800 mb-1">About the "Apply Now" links</h4>
+                  <p className="text-xs text-blue-700">
+                    Clicking "Apply Now" will take you directly to the original job posting on the respective job site. If you encounter any issues with a link, try searching for the job directly on the source website.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
+      
+      {/* Cover Letter Modal */}
+      {selectedJob && (
+        <CoverLetterModal
+          isOpen={coverLetterModalOpen}
+          onClose={closeCoverLetterModal}
+          jobTitle={selectedJob.title}
+          company={selectedJob.company}
+          location={selectedJob.location}
+          keywords={selectedJob.keywords}
+        />
+      )}
     </div>
   );
 } 
