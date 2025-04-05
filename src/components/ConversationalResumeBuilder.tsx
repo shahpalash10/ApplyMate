@@ -106,7 +106,7 @@ export default function ConversationalResumeBuilder() {
     setIsTyping(true);
     
     // Add AI response with typing effect
-    let fullMessage = aiResponse;
+    const fullMessage = aiResponse;
     let currentText = '';
     
     setMessages(prev => [...prev, { id: assistantMessageId, text: currentText, isUser: false }]);
@@ -597,6 +597,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
           </button>
         </div>
       </div>
+      <p className="text-gray-500 text-sm text-center my-4">Don&apos;t see the right sections? Just tell me what you want to include.</p>
     </div>
   );
 } 

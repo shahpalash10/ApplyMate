@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { usePDF } from 'react-to-pdf';
 
@@ -33,7 +33,6 @@ export default function ResumeForm() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialResumeData);
   const [generatedResume, setGeneratedResume] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const resumeRef = useRef<HTMLDivElement>(null);
   const { toPDF, targetRef } = usePDF({
     filename: `${resumeData.name.replace(/\s+/g, '_') || 'resume'}_resume.pdf`,
   });

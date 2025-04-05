@@ -71,7 +71,7 @@ async function scrapeInternshala(query: string, location?: string): Promise<JobL
     const jobs: JobListing[] = [];
     
     // Extract job listings - adjust selectors based on Internshala's HTML structure
-    $('.individual_internship').each((index: number, element: any) => {
+    $('.individual_internship').each((index: number, element: Element) => {
       const title = $(element).find('.heading_4_5').text().trim();
       const company = $(element).find('.company_name').text().trim();
       const locationText = $(element).find('.location_link').text().trim();
@@ -115,7 +115,7 @@ async function scrapeUnstop(query: string, location?: string): Promise<JobListin
     const jobs: JobListing[] = [];
     
     // Extract job listings - adjust selectors based on Unstop's HTML structure
-    $('.opportunity-card').each((index: number, element: any) => {
+    $('.opportunity-card').each((index: number, element: Element) => {
       const title = $(element).find('.opportunity-title').text().trim();
       const company = $(element).find('.company-name').text().trim();
       const locationText = $(element).find('.location-text').text().trim();
@@ -178,17 +178,14 @@ async function scrapeNaukri(query: string, location?: string, experience?: strin
     const jobs: JobListing[] = [];
     
     // Extract job listings
-    $('.jobTuple').each((index: number, element: any) => {
+    $('.jobTuple').each((index: number, element: Element) => {
       const title = $(element).find('.title').text().trim();
       const company = $(element).find('.companyInfo span.subTitle').text().trim();
       const locationText = $(element).find('.subTitle.ellipsis.fleft.location').text().trim();
       const salary = $(element).find('.salary').text().trim() || 'Not specified';
       
       // Try to find the job URL
-      let link = $(element).find('a.title').attr('href') || '';
-      if (!link.startsWith('http')) {
-        link = 'https://www.naukri.com' + link;
-      }
+      const link = $(element).find('a.title').attr('href') || '';
       
       // Only add jobs that match location if specified
       if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
@@ -246,14 +243,14 @@ async function scrapeLinkedIn(query: string, location?: string, experience?: str
     const jobs: JobListing[] = [];
     
     // Extract job listings - LinkedIn has complex structure and may require updates
-    $('.base-card.relative.job-search-card').each((index: number, element: any) => {
+    $('.base-card.relative.job-search-card').each((index: number, element: Element) => {
       const title = $(element).find('.base-search-card__title').text().trim();
       const company = $(element).find('.base-search-card__subtitle').text().trim();
       const locationText = $(element).find('.job-search-card__location').text().trim();
       const salary = 'Check on LinkedIn'; // LinkedIn often doesn't show salary
       
       // Get the job link
-      let link = $(element).find('a.base-card__full-link').attr('href') || '';
+      const link = $(element).find('a.base-card__full-link').attr('href') || '';
       
       // Only add jobs that match location if specified and have required info
       if (title && company && (!location || locationText.toLowerCase().includes(location.toLowerCase()))) {
@@ -285,61 +282,72 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
     
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
-    // Create a prompt for Gemini to enhance and analyze the job listings
-    const jobsData = JSON.stringify(jobs.slice(0, 10)); // Limit to first 10 jobs for API size
-    
-    const prompt = `
-    I have scraped these job listings for "${query}" ${experience ? `with ${experience} experience` : ''}:
-    
-    ${jobsData}
-    
-    Please enhance these job listings by:
-    1. Identifying keywords in job titles
-    2. Adding a "match_score" field (0-100) showing how well each job matches the query "${query}"
-    3. Adding a "recommendations" field with 1-2 sentences of advice for each job
-    4. Adding a "difficulty" field (Easy, Medium, Hard) based on job requirements
-    5. Sort jobs from best match to worst match
-    
-    Return ONLY a valid JSON array with the enhanced job listings. DO NOT include markdown formatting, code blocks, or any explanation text. Just return the raw JSON array.
-    `;
-    
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
-    
-    try {
-      // Clean the response text in case it contains markdown code blocks
-      let cleanedText = text;
-      
-      // Remove markdown code blocks if present
-      if (text.includes('```')) {
-        // Extract content between code blocks
-        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch && codeBlockMatch[1]) {
-          cleanedText = codeBlockMatch[1].trim();
-        } else {
-          // If regex didn't work, brute force removal
-          cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        }
-      }
-      
-      console.log('Attempting to parse:', cleanedText.substring(0, 100) + '...');
-      
-      // Try to parse the JSON response
-      let enhancedJobs = JSON.parse(cleanedText) as JobListing[];
-      
-      // Validate that it's an array
-      if (!Array.isArray(enhancedJobs)) {
-        throw new Error('Response is not an array');
-      }
-      
-      return enhancedJobs;
-    } catch (parseError) {
-      console.error('Error parsing Gemini response:', parseError);
-      console.log('Response was:', text.substring(0, 200) + '...');
-      // If parsing fails, return original jobs
-      return jobs;
+    // Process jobs in batches to avoid overwhelming Gemini API
+    const batches = [];
+    for (let i = 0; i < jobs.length; i += 5) {
+      batches.push(jobs.slice(i, i + 5));
     }
+    
+    const enhancedJobs = await Promise.all(batches.map(async (batch) => {
+      // Create a prompt for Gemini to enhance and analyze the job listings
+      const jobsData = JSON.stringify(batch);
+      
+      const prompt = `
+      I have scraped these job listings for "${query}" ${experience ? `with ${experience} experience` : ''}:
+      
+      ${jobsData}
+      
+      Please enhance these job listings by:
+      1. Identifying keywords in job titles
+      2. Adding a "match_score" field (0-100) showing how well each job matches the query "${query}"
+      3. Adding a "recommendations" field with 1-2 sentences of advice for each job
+      4. Adding a "difficulty" field (Easy, Medium, Hard) based on job requirements
+      5. Sort jobs from best match to worst match
+      
+      Return ONLY a valid JSON array with the enhanced job listings. DO NOT include markdown formatting, code blocks, or any explanation text. Just return the raw JSON array.
+      `;
+      
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+      
+      try {
+        // Clean the response text in case it contains markdown code blocks
+        let cleanedText = text;
+        
+        // Remove markdown code blocks if present
+        if (text.includes('```')) {
+          // Extract content between code blocks
+          const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (codeBlockMatch && codeBlockMatch[1]) {
+            cleanedText = codeBlockMatch[1].trim();
+          } else {
+            // If regex didn't work, brute force removal
+            cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          }
+        }
+        
+        console.log('Attempting to parse:', cleanedText.substring(0, 100) + '...');
+        
+        // Try to parse the JSON response
+        const enhancedBatch = JSON.parse(cleanedText) as JobListing[];
+        
+        // Validate that it's an array
+        if (!Array.isArray(enhancedBatch)) {
+          throw new Error('Response is not an array');
+        }
+        
+        return enhancedBatch;
+      } catch (parseError) {
+        console.error('Error parsing Gemini response:', parseError);
+        console.log('Response was:', text.substring(0, 200) + '...');
+        // If parsing fails, return original jobs
+        return batch;
+      }
+    }));
+    
+    // Flatten the batches back into a single array
+    return enhancedJobs.flat();
   } catch (error) {
     console.error('Error enhancing jobs with Gemini:', error);
     return jobs;
