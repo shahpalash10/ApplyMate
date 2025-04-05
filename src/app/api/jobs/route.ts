@@ -300,7 +300,7 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
     4. Adding a "difficulty" field (Easy, Medium, Hard) based on job requirements
     5. Sort jobs from best match to worst match
     
-    Return ONLY a valid JSON array with the enhanced job listings.
+    Return ONLY a valid JSON array with the enhanced job listings. DO NOT include markdown formatting, code blocks, or any explanation text. Just return the raw JSON array.
     `;
     
     const result = await model.generateContent(prompt);
@@ -308,8 +308,25 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
     const text = response.text();
     
     try {
+      // Clean the response text in case it contains markdown code blocks
+      let cleanedText = text;
+      
+      // Remove markdown code blocks if present
+      if (text.includes('```')) {
+        // Extract content between code blocks
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          cleanedText = codeBlockMatch[1].trim();
+        } else {
+          // If regex didn't work, brute force removal
+          cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        }
+      }
+      
+      console.log('Attempting to parse:', cleanedText.substring(0, 100) + '...');
+      
       // Try to parse the JSON response
-      let enhancedJobs = JSON.parse(text) as JobListing[];
+      let enhancedJobs = JSON.parse(cleanedText) as JobListing[];
       
       // Validate that it's an array
       if (!Array.isArray(enhancedJobs)) {
@@ -319,6 +336,7 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
       return enhancedJobs;
     } catch (parseError) {
       console.error('Error parsing Gemini response:', parseError);
+      console.log('Response was:', text.substring(0, 200) + '...');
       // If parsing fails, return original jobs
       return jobs;
     }
