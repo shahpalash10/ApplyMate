@@ -91,6 +91,17 @@ export default function Home() {
             >
               Begin the Magic ✨
             </Link>
+            <div className="mt-4 text-sm text-gray-500">
+              <a 
+                href="https://ai.google.dev/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                Set up a Gemini API key
+              </a>{" "}
+              for full AI functionality
+            </div>
           </div>
         </div>
 

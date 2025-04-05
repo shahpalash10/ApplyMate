@@ -1,14 +1,27 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
+import { getGeminiApiKey, isGeminiConfigured, geminiConfig } from '@/utils/apiConfig';
 
 // Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const apiKey = getGeminiApiKey();
+const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: geminiConfig.modelName });
 
 export async function POST(request: Request) {
   try {
     // Log incoming requests to help with debugging
     console.log('Cover letter API called');
+    
+    // Check if API key is available
+    if (!isGeminiConfigured()) {
+      return NextResponse.json(
+        { 
+          error: 'API key not configured', 
+          text: "I'm sorry, the AI service is not properly configured. Please check your environment variables and set GOOGLE_GEMINI_API_KEY."
+        },
+        { status: 503 }
+      );
+    }
     
     // Parse the request body
     const body = await request.json();

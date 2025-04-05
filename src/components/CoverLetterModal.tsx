@@ -170,6 +170,15 @@ export default function CoverLetterModal({
       }
       
       const data = await response.json();
+      
+      // Check if there was an API configuration error
+      if (data.error === 'API key not configured') {
+        setCoverLetter("⚠️ AI cover letter generation is currently unavailable due to API configuration issues. Please contact the administrator to set up the GOOGLE_GEMINI_API_KEY environment variable.");
+        console.error('API configuration error:', data.error);
+        setIsEditing(true);
+        return;
+      }
+      
       console.log('Successfully generated cover letter');
       setCoverLetter(data.coverLetter);
       setIsEditing(false);

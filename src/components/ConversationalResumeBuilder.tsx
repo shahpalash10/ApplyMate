@@ -342,6 +342,12 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
       });
 
       const data = await response.json();
+      
+      // Check if there was an API configuration error
+      if (data.error === 'API key not configured') {
+        return data.response || "⚠️ AI features are currently unavailable. Please check the API configuration.";
+      }
+      
       return data.response || "What else for your resume? ✨";
     } catch (error) {
       console.error('Error getting Gemini response:', error);

@@ -109,3 +109,27 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+### Environment Variables
+
+#### Required Environment Variables
+For the AI features to work, you must set up a Google Gemini API key. The application checks for the API key in two possible environment variable names:
+
+```
+GOOGLE_GEMINI_API_KEY=your_gemini_api_key
+# OR
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+For local development, create a `.env.local` file in the root directory with these variables.
+
+#### Deployment Environment Variables
+
+When deploying to platforms like Vercel, Netlify, or others, make sure to configure the environment variables in your deployment platform's settings:
+
+1. Go to your project settings in your deployment platform
+2. Find the environment variables section
+3. Add `GOOGLE_GEMINI_API_KEY` with your Gemini API key value
+4. Save the changes and redeploy your application
+
+Note: Without the API key, the application will still function, but AI-powered features like resume building, cover letter generation, and job matching will use fallback content instead of actual AI-generated content.

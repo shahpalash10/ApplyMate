@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { getGeminiApiKey, isGeminiConfigured, geminiConfig } from '@/utils/apiConfig';
 
 interface JobListing {
   title: string;
@@ -16,7 +17,9 @@ interface JobListing {
   keywords?: string[];
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Replace the existing API key code with:
+const apiKey = getGeminiApiKey();
+const genAI = new GoogleGenerativeAI(apiKey);
 
 export async function POST(request: Request) {
   try {
@@ -28,6 +31,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    // Check if API key is available - if not, provide fallback experience
+    const useAI = isGeminiConfigured();
 
     // Scrape job listings from multiple sites
     const jobs = await Promise.all([
@@ -43,7 +49,7 @@ export async function POST(request: Request) {
     const allJobs = jobs.flat();
 
     // Process the jobs with Gemini for better formatting and additional insights
-    const enhancedJobs = await enhanceJobsWithGemini(allJobs, query, experience);
+    const enhancedJobs = await enhanceJobsWithGemini(allJobs, query, experience, useAI);
 
     return NextResponse.json({ jobs: enhancedJobs });
   } catch (error) {
@@ -351,15 +357,23 @@ async function scrapeIndeed(query: string, location?: string, experience?: strin
   }
 }
 
-async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experience?: string): Promise<JobListing[]> {
+async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experience?: string, useAI: boolean = true): Promise<JobListing[]> {
   try {
-    // Skip if no jobs found
-    if (jobs.length === 0) {
-      // Add fallback jobs for testing if no jobs found
+    // Check if we have any jobs and AI is enabled
+    if (jobs.length === 0 || !useAI) {
+      // If we have jobs but AI is disabled, just return the jobs with basic enhancement
+      if (jobs.length > 0 && !useAI) {
+        return jobs.map(job => ({
+          ...job,
+          match_score: 75, // Default match score
+          recommendations: "Consider applying if this matches your skills and interests.",
+          difficulty: "Medium" // Default difficulty
+        }));
+      }
       return getFallbackJobs(query, experience);
     }
     
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: geminiConfig.modelName });
     
     // Process jobs in batches to avoid overwhelming Gemini API
     const batches: JobListing[][] = [];
