@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// OCR.space API key
-const OCR_API_KEY = 'K84787493088957';
+// OCR.space API key - using environment variable for security
+const OCR_API_KEY = process.env.OCR_API_KEY || '';
 
 // Text extraction from resume using OCR.space API
 async function extractTextFromResume(file: File): Promise<string> {
