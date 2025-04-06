@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // OCR.space API key - using environment variable for security
 const OCR_API_KEY = process.env.OCR_API_KEY || '';
+console.log('Environment check - OCR API key available:', !!OCR_API_KEY);
 
 // Text extraction from resume using OCR.space API
 async function extractTextFromResume(file: File): Promise<string> {
   try {
     console.log('Starting OCR for file:', file.name, 'Type:', file.type, 'Size:', file.size);
+    
+    // Check if API key is available
+    if (!OCR_API_KEY) {
+      console.error('OCR API key is missing. Please set the OCR_API_KEY environment variable.');
+      return ""; // Empty string will trigger fallback data
+    }
     
     // Convert the file to base64
     const arrayBuffer = await file.arrayBuffer();
