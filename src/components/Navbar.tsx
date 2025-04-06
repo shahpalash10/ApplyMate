@@ -211,7 +211,7 @@ export default function Navbar() {
                 <span className={`font-bold text-xl ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}>
-                  AI<span className="text-primary-600">Jobs</span>
+                  Apply<span className="text-primary-600">Mate</span>
                 </span>
               </div>
             </Link>

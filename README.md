@@ -1,6 +1,6 @@
-# AIJobs - Find Your Dream AI Career
+# Apply Mate - Find Your Dream Career
 
-An AI-powered platform that connects AI professionals with cutting-edge job opportunities. Built with Next.js, React, Tailwind CSS, and framer-motion.
+An AI-powered platform that connects professionals with cutting-edge job opportunities. Built with Next.js, React, Tailwind CSS, and framer-motion.
 
 ## Features
 
@@ -23,7 +23,7 @@ An AI-powered platform that connects AI professionals with cutting-edge job oppo
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd aijobs
+   cd applymatte
    ```
 
 2. **Install dependencies**

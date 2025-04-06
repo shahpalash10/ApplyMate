@@ -8,8 +8,8 @@ import Footer from '@/components/Footer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AIJobs - Find Your Dream AI Career',
-  description: 'An AI-powered platform that connects AI professionals with cutting-edge job opportunities',
+  title: 'Apply Mate - Find Your Dream Career',
+  description: 'An AI-powered platform that connects professionals with cutting-edge job opportunities',
 };
 
 export default function RootLayout({
