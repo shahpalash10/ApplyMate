@@ -15,7 +15,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    
+
     // Check if API key is available before making requests
     if (!isGeminiConfigured()) {
       return NextResponse.json(
@@ -237,7 +237,7 @@ IMPORTANT ATS-FRIENDLY FORMATTING INSTRUCTIONS:
 
 Return ONLY the markdown-formatted resume content that can be directly converted to PDF. Do not include the JSON in your response.`;
 
-        result = await model.generateContent(resumePrompt);
+      result = await model.generateContent(resumePrompt);
       }
     } else {
       // For conversational interactions, maintain the fun wizard persona but be concise

@@ -15,6 +15,7 @@ interface JobListing {
   recommendations?: string;
   difficulty?: string;
   keywords?: string[];
+  deadline?: string;
 }
 
 // Replace the existing API key code with:
@@ -268,22 +269,45 @@ async function scrapeLinkedIn(query: string, location?: string, experience?: str
       const title = $(element).find('.base-search-card__title').text().trim();
       const company = $(element).find('.base-search-card__subtitle').text().trim();
       const locationText = $(element).find('.job-search-card__location').text().trim();
-      const salary = 'Check on LinkedIn'; // LinkedIn often doesn't show salary
+      const salary = $(element).find('.job-search-card__salary-info').text().trim() || 'Not specified';
       
-      // Get the job link and ensure it's a complete URL
-      let linkHref = $(element).find('a.base-card__full-link').attr('href') || '';
-      // Ensure we have a complete URL
-      const link = linkHref;
+      // Extract deadline if available - LinkedIn often shows "Posted X days ago" or "Applications close on date"
+      let deadline = '';
+      const dateInfo = $(element).find('.job-search-card__listdate').text().trim();
+      if (dateInfo.includes('closes') || dateInfo.includes('Close')) {
+        // Example: "Applications close on Jun 30, 2023"
+        const match = dateInfo.match(/close[s]? on (.+)/i);
+        if (match && match[1]) {
+          deadline = match[1].trim();
+        }
+      } else if (dateInfo.includes('Posted')) {
+        // For "Posted X days ago", create a deadline 30 days from posted date as estimate
+        const match = dateInfo.match(/Posted (\d+) day[s]? ago/i);
+        if (match && match[1]) {
+          const daysAgo = parseInt(match[1], 10);
+          const estimatedDeadline = new Date();
+          estimatedDeadline.setDate(estimatedDeadline.getDate() + 30 - daysAgo); // Assume 30 day window
+          deadline = estimatedDeadline.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+        }
+      }
       
-      // Only add jobs that match location if specified and have required info
-      if (title && company && (!location || locationText.toLowerCase().includes(location.toLowerCase()))) {
+      // Get href attribute
+      const link = $(element).find('a.base-card__full-link').attr('href') || '';
+      
+      // Only add jobs that match location if specified
+      if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
         jobs.push({
           title,
           company,
           location: locationText,
           salary,
           link,
-          source: 'LinkedIn'
+          source: 'LinkedIn',
+          deadline
         });
       }
     });
@@ -334,31 +358,43 @@ async function scrapeIndeed(query: string, location?: string, experience?: strin
     
     // Extract job listings from Indeed
     $('.job_seen_beacon').each((_, element) => {
-      const title = $(element).find('.jobTitle span').text().trim() || 
-                    $(element).find('[data-testid="jobTitle"]').text().trim();
-      const company = $(element).find('.companyName').text().trim() || 
-                      $(element).find('[data-testid="company-name"]').text().trim();
+      const title = $(element).find('.jobTitle').text().trim();
+      const company = $(element).find('.companyName').text().trim();
       const locationText = $(element).find('.companyLocation').text().trim();
+      const salary = $(element).find('.salary-snippet-container').text().trim() || 'Not specified';
       
-      // Try to extract salary if available
-      const salary = $(element).find('.salary-snippet-container').text().trim() || 
-                     $(element).find('[data-testid="attribute_snippet_testid"]').text().trim() || 
-                     'Not specified';
+      // Extract deadline if available
+      let deadline = '';
+      const dateInfo = $(element).find('.date').text().trim();
+      if (dateInfo.includes('Posted')) {
+        // For "Posted X days ago", create a deadline 30 days from posted date as estimate
+        const match = dateInfo.match(/Posted (\d+) day[s]? ago/i);
+        if (match && match[1]) {
+          const daysAgo = parseInt(match[1], 10);
+          const estimatedDeadline = new Date();
+          estimatedDeadline.setDate(estimatedDeadline.getDate() + 30 - daysAgo); // Assume 30 day window
+          deadline = estimatedDeadline.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          });
+        }
+      }
       
-      // Get the job link and ensure it's a complete URL
-      let jobId = $(element).attr('data-jk') || $(element).attr('id')?.replace('job_', '') || '';
-      // Construct the job URL
-      const link = jobId ? `https://www.indeed.com/viewjob?jk=${jobId}` : '';
+      // Get href attribute
+      let jobHref = $(element).find('a.jcs-JobTitle').attr('href') || '';
+      const link = jobHref.startsWith('http') ? jobHref : `https://www.indeed.com${jobHref}`;
       
-      // Only add jobs that have valid data and match location if specified
-      if (title && company && link && (!location || locationText.toLowerCase().includes(location.toLowerCase()))) {
+      // Only add jobs that match location if specified
+      if (!location || locationText.toLowerCase().includes(location.toLowerCase())) {
         jobs.push({
           title,
           company,
           location: locationText,
           salary,
           link,
-          source: 'Indeed'
+          source: 'Indeed',
+          deadline
         });
       }
     });
@@ -372,29 +408,51 @@ async function scrapeIndeed(query: string, location?: string, experience?: strin
 
 async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experience?: string, useAI: boolean = true): Promise<JobListing[]> {
   try {
-    // Check if we have any jobs and AI is enabled
-    if (jobs.length === 0 || !useAI) {
-      // If we have jobs but AI is disabled, just return the jobs with basic enhancement
-      if (jobs.length > 0 && !useAI) {
-        return jobs.map(job => ({
-          ...job,
-          match_score: 75, // Default match score
-          recommendations: "Consider applying if this matches your skills and interests.",
-          difficulty: "Medium" // Default difficulty
-        }));
+    // Add estimated deadlines for jobs without deadlines first
+    const jobsWithDeadlines = jobs.map(job => {
+      if (!job.deadline) {
+        // Generate an estimated deadline 14-30 days from now
+        const randomDays = Math.floor(Math.random() * 16) + 14; // Random between 14-30 days
+        const estimatedDeadline = new Date();
+        estimatedDeadline.setDate(estimatedDeadline.getDate() + randomDays);
+        job.deadline = estimatedDeadline.toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      } else {
+        // Ensure consistent date formatting
+        try {
+          const deadlineDate = new Date(job.deadline);
+          // If valid date, format it consistently
+          if (!isNaN(deadlineDate.getTime())) {
+            job.deadline = deadlineDate.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric' 
+            });
+          }
+        } catch (error) {
+          // Keep original format if parsing fails
+        }
       }
-      return getFallbackJobs(query, experience);
+      return job;
+    });
+
+    // If AI enhancement is disabled, return jobs with deadlines only
+    if (!useAI) {
+      return jobsWithDeadlines;
     }
     
     const model = genAI.getGenerativeModel({ model: geminiConfig.modelName });
     
     // Process jobs in batches to avoid overwhelming Gemini API
     const batches: JobListing[][] = [];
-    for (let i = 0; i < jobs.length; i += 5) {
-      batches.push(jobs.slice(i, i + 5));
+    for (let i = 0; i < jobsWithDeadlines.length; i += 5) {
+      batches.push(jobsWithDeadlines.slice(i, i + 5));
     }
     
-    const enhancedJobs = await Promise.all(batches.map(async (batch) => {
+    const batchResults = await Promise.all(batches.map(async (batch) => {
       // Create a prompt for Gemini to enhance and analyze the job listings
       const jobsData = JSON.stringify(batch);
       
@@ -453,7 +511,7 @@ async function enhanceJobsWithGemini(jobs: JobListing[], query: string, experien
     }));
     
     // Flatten the batches back into a single array
-    return enhancedJobs.flat();
+    return batchResults.flat();
   } catch (error) {
     console.error('Error enhancing jobs with Gemini:', error);
     return jobs;

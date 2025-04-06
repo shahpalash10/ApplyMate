@@ -74,6 +74,46 @@ const jobRoles = [
   'MLOps Engineer',
 ];
 
+// Update the job role animation styles to ensure text is fully visible
+const jobRoleAnimationStyles = `
+  .job-role-container {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    height: 1.5em;
+    min-width: 240px; /* Increased width to accommodate longer text */
+    vertical-align: bottom;
+  }
+  
+  .job-roles-slider {
+    position: absolute;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    transition: transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
+    width: 100%;
+  }
+  
+  .job-role-item {
+    height: 1.5em;
+    display: flex;
+    align-items: center;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    justify-content: flex-start;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  /* Media query for responsive width adjustment */
+  @media (max-width: 640px) {
+    .job-role-container {
+      min-width: 210px;
+    }
+  }
+`;
+
 export default function Home() {
   const { isDark } = useTheme();
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
@@ -81,10 +121,16 @@ export default function Home() {
 
   // Auto-rotate job titles
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentJobIndex((prev) => (prev + 1) % jobRoles.length);
-    }, 3000);
-    return () => clearInterval(interval);
+    // We'll wait a bit before starting the animation for everything to render properly
+    const startDelay = setTimeout(() => {
+      const interval = setInterval(() => {
+        setCurrentJobIndex((prev) => (prev + 1) % jobRoles.length);
+      }, 3500); // Slightly longer time between changes for better readability
+      
+      return () => clearInterval(interval);
+    }, 1000); // Delay the start of rotation
+    
+    return () => clearTimeout(startDelay);
   }, []);
 
   // Set visibility for animation when component mounts
@@ -131,12 +177,21 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="h-12 mb-8"
             >
+              <style jsx>{jobRoleAnimationStyles}</style>
+
               <p className="text-xl text-gray-600 dark:text-gray-300">
                 Discover the perfect role as a{' '}
-                <span className="relative inline-block overflow-hidden h-[1.5em] align-bottom w-56">
-                  <span className="text-primary-600 dark:text-primary-400 font-semibold whitespace-nowrap absolute left-0 transition-transform duration-500 ease-in-out" style={{ transform: `translateY(${currentJobIndex * -100}%)` }}>
+                <span className="job-role-container">
+                  <span 
+                    className="job-roles-slider text-primary-600 dark:text-primary-400 font-semibold"
+                    style={{ 
+                      transform: `translateY(${-currentJobIndex * 1.5}em)`,
+                    }}
+                  >
                     {jobRoles.map((role, index) => (
-                      <span key={index} className="block h-[1.5em]">{role}</span>
+                      <span key={index} className="job-role-item">
+                        {role}
+                      </span>
                     ))}
                   </span>
                 </span>
@@ -244,10 +299,10 @@ export default function Home() {
             >
               Our intelligent platform uses cutting-edge AI to optimize every aspect of your job search journey
             </motion.p>
-          </div>
+        </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+          {features.map((feature, index) => (
               <motion.div
                 key={index}
                 custom={index + 2}
@@ -296,7 +351,7 @@ export default function Home() {
                 >
                   <div className="mb-4">
                     <span className="text-5xl font-bold text-gradient">60%</span>
-                  </div>
+                </div>
                   <p className="text-lg text-gray-600 dark:text-gray-300">ApplyMate reduces your job hunt-time.</p>
                 </Card>
               </motion.div>
@@ -315,7 +370,7 @@ export default function Home() {
                 >
                   <div className="mb-4">
                     <span className="text-5xl font-bold text-gradient">40%</span>
-                  </div>
+                </div>
                   <p className="text-lg text-gray-600 dark:text-gray-300">Tailored Resumes increases your Interview Chances.</p>
                 </Card>
               </motion.div>
@@ -338,8 +393,8 @@ export default function Home() {
                   <p className="text-lg text-gray-600 dark:text-gray-300">The time it takes per week to search and apply for jobs manually.</p>
                 </Card>
               </motion.div>
-            </div>
-          </div>
+                </div>
+                </div>
         </div>
       </section>
 
@@ -348,8 +403,8 @@ export default function Home() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary-500/10 rounded-full filter blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent-500/10 rounded-full filter blur-[100px] -translate-x-1/2 translate-y-1/2"></div>
-        </div>
-        
+      </div>
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.h2

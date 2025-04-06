@@ -216,22 +216,22 @@ export default function ConversationalResumeBuilder() {
         case INTERVIEW_STAGES.PERSONAL:
           // Personal information collection
           if (!prev.collectedFields.includes('name')) {
-            updated.name = message;
-            updated.collectedFields = [...prev.collectedFields, 'name'];
-          } 
-          else if (/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(message) && 
-                  !prev.collectedFields.includes('email')) {
-            updated.email = message.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/)?.[0] || '';
-            updated.collectedFields = [...prev.collectedFields, 'email'];
-          }
+        updated.name = message;
+        updated.collectedFields = [...prev.collectedFields, 'name'];
+      }
+      else if (/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/.test(message) && 
+               !prev.collectedFields.includes('email')) {
+        updated.email = message.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/)?.[0] || '';
+        updated.collectedFields = [...prev.collectedFields, 'email'];
+      }
           else if (/\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b/.test(message) && 
-                  !prev.collectedFields.includes('phone')) {
+               !prev.collectedFields.includes('phone')) {
             const phoneMatch = message.match(/\b(?:\+?\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}\b/)?.[0] || '';
             updated.phone = phoneMatch;
-            updated.collectedFields = [...prev.collectedFields, 'phone'];
-          }
+        updated.collectedFields = [...prev.collectedFields, 'phone'];
+      }
           else if ((lowerMessage.includes('linkedin.com') || lowerMessage.includes('linkedin')) && 
-                  !prev.collectedFields.includes('linkedin')) {
+               !prev.collectedFields.includes('linkedin')) {
             // Extract LinkedIn URL or username
             if (lowerMessage.includes('linkedin.com/in/')) {
               const linkedInMatch = message.match(/linkedin\.com\/in\/[A-Za-z0-9_-]+/i)?.[0] || '';
@@ -239,8 +239,8 @@ export default function ConversationalResumeBuilder() {
             } else {
               updated.linkedin = message;
             }
-            updated.collectedFields = [...prev.collectedFields, 'linkedin'];
-          }
+        updated.collectedFields = [...prev.collectedFields, 'linkedin'];
+      }
           else if (updated.isJobTechnical && 
                   (lowerMessage.includes('github.com') || lowerMessage.includes('github')) && 
                   !prev.collectedFields.includes('github')) {
@@ -274,8 +274,8 @@ export default function ConversationalResumeBuilder() {
           if (message.length > 10) {
             updated.education = [...prev.education, message];
             if (!prev.collectedFields.includes('education')) {
-              updated.collectedFields = [...prev.collectedFields, 'education'];
-            }
+          updated.collectedFields = [...prev.collectedFields, 'education'];
+        }
             // Don't advance stage automatically, will ask if user wants to add more
           }
           break;
@@ -285,8 +285,8 @@ export default function ConversationalResumeBuilder() {
           if (message.length > 10) {
             updated.experience = [...prev.experience, message];
             if (!prev.collectedFields.includes('experience')) {
-              updated.collectedFields = [...prev.collectedFields, 'experience'];
-            }
+          updated.collectedFields = [...prev.collectedFields, 'experience'];
+        }
             // Don't advance stage automatically, will ask if user wants to add more
           }
           break;
@@ -352,8 +352,8 @@ export default function ConversationalResumeBuilder() {
             });
             
             if (!prev.collectedFields.includes('skills')) {
-              updated.collectedFields = [...prev.collectedFields, 'skills'];
-            }
+          updated.collectedFields = [...prev.collectedFields, 'skills'];
+        }
           }
           break;
           
@@ -362,8 +362,8 @@ export default function ConversationalResumeBuilder() {
           if (message.length > 10) {
             updated.projects = [...prev.projects, message];
             if (!prev.collectedFields.includes('projects')) {
-              updated.collectedFields = [...prev.collectedFields, 'projects'];
-            }
+          updated.collectedFields = [...prev.collectedFields, 'projects'];
+        }
           }
           break;
           
@@ -372,8 +372,8 @@ export default function ConversationalResumeBuilder() {
           if (message.length > 3) {
             updated.certifications = [...prev.certifications, message];
             if (!prev.collectedFields.includes('certifications')) {
-              updated.collectedFields = [...prev.collectedFields, 'certifications'];
-            }
+          updated.collectedFields = [...prev.collectedFields, 'certifications'];
+        }
           }
           break;
       }
@@ -768,13 +768,13 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
       <div className={`flex-1 p-4 overflow-y-auto ${isDark ? 'bg-gray-800/40' : 'bg-white'}`}>
         <div className="max-w-3xl mx-auto">
           {messages.map((message) => (
-            <div 
-              key={message.id} 
+            <div
+              key={message.id}
               className={`mb-4 flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
             >
               <div 
                 className={`rounded-lg px-4 py-2 max-w-[80%] ${
-                  message.isUser 
+                  message.isUser
                     ? `${isDark ? 'bg-primary-700 text-white' : 'bg-primary-600 text-white'}` 
                     : `${isDark ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-800'}`
                 } ${message.isLoading ? 'animate-pulse' : ''}`}
@@ -819,7 +819,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
               <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-            </svg>
+              </svg>
           </Button>
         </div>
       </div>
