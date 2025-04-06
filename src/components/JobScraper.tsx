@@ -7,6 +7,8 @@ import CoverLetterModal from './CoverLetterModal';
 import AutoApplyModal from './AutoApplyModal';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
+import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { toast, ToastContainer } from './ui/use-toast';
 
 interface JobListing {
   title: string;
@@ -19,6 +21,7 @@ interface JobListing {
   recommendations?: string;
   difficulty?: string;
   keywords?: string[];
+  deadline?: string;
 }
 
 export default function JobScraper() {
@@ -52,6 +55,7 @@ export default function JobScraper() {
     resumeUrl: ''
   });
   const formRef = useRef<HTMLFormElement>(null);
+  const [jobsWithNotifications, setJobsWithNotifications] = useState<Set<string>>(new Set());
 
   // Load user profile from localStorage on component mount
   useEffect(() => {
@@ -191,10 +195,39 @@ export default function JobScraper() {
     setCoverLetterModalOpen(false);
   };
 
-  const toggleSelectionMode = () => {
-    setSelectionMode(!selectionMode);
-    if (selectionMode) {
-      setSelectedJobs([]);
+  const toggleSelectionMode = (valueOrEvent?: boolean | React.MouseEvent<HTMLButtonElement>) => {
+    // If it's an event, toggle the current value
+    if (valueOrEvent === undefined || typeof valueOrEvent !== 'boolean') {
+      const newValue = !selectionMode;
+      setSelectionMode(newValue);
+      if (!newValue) {
+        setSelectedJobs([]);
+      }
+    } else {
+      // If it's a boolean, use that value directly
+      setSelectionMode(valueOrEvent);
+      if (!valueOrEvent) {
+        setSelectedJobs([]);
+      }
+    }
+  };
+
+  // Helper function to check if a deadline is approaching (within 3 days)
+  const isDeadlineApproaching = (deadline?: string): boolean => {
+    if (!deadline) return false;
+    
+    try {
+      const deadlineDate = new Date(deadline);
+      const currentDate = new Date();
+      
+      // Calculate difference in days
+      const diffTime = deadlineDate.getTime() - currentDate.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      // Return true if deadline is within 3 days and in the future
+      return diffDays <= 3 && diffDays >= 0;
+    } catch (error) {
+      return false;
     }
   };
 
@@ -221,6 +254,36 @@ export default function JobScraper() {
 
   const closeAutoApplyModal = () => {
     setAutoApplyModalOpen(false);
+  };
+
+  const toggleNotification = (e: React.MouseEvent, job: JobListing) => {
+    e.stopPropagation(); // Prevent job selection when clicking notification button
+    
+    setJobsWithNotifications(prev => {
+      const newNotifications = new Set(prev);
+      const jobId = `${job.title}-${job.company}`;
+      
+      if (newNotifications.has(jobId)) {
+        newNotifications.delete(jobId);
+      } else {
+        newNotifications.add(jobId);
+        // Show a toast notification to the user
+        toast({
+          title: "Notification enabled",
+          description: `You will be notified before the deadline for "${job.title}"`,
+          status: "success",
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+      
+      return newNotifications;
+    });
+  };
+
+  const isNotificationEnabled = (job: JobListing) => {
+    const jobId = `${job.title}-${job.company}`;
+    return jobsWithNotifications.has(jobId);
   };
 
   return (
@@ -501,6 +564,39 @@ export default function JobScraper() {
                                 {job.salary}
                               </div>
                             )}
+                            {job.deadline && (
+                              <div className="flex items-center justify-between">
+                                <div className={`flex items-center ${
+                                  isDeadlineApproaching(job.deadline) 
+                                    ? (isDark ? 'text-red-300' : 'text-red-600') 
+                                    : (isDark ? 'text-blue-300' : 'text-blue-600')
+                                }`}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  {isDeadlineApproaching(job.deadline) ? 'Closing soon: ' : 'Deadline: '}{job.deadline}
+                                </div>
+                                
+                                <button 
+                                  onClick={(e) => toggleNotification(e, job)}
+                                  className={`ml-2 flex items-center text-xs rounded-full px-2 py-0.5 
+                                    ${isNotificationEnabled(job)
+                                      ? (isDark ? 'bg-primary-700 text-primary-200' : 'bg-primary-100 text-primary-800')
+                                      : (isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-600')
+                                    }`}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" 
+                                    className={`h-3.5 w-3.5 mr-1 ${isNotificationEnabled(job) ? 'text-green-400' : ''}`} 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                  </svg>
+                                  {isNotificationEnabled(job) ? 'Notify: On' : 'Notify'}
+                                </button>
+                              </div>
+                            )}
                           </div>
                           {job.keywords && job.keywords.length > 0 && (
                             <div className="flex flex-wrap gap-1 mb-2">
@@ -627,6 +723,9 @@ export default function JobScraper() {
           onProfileUpdate={handleProfileUpdate}
         />
       )}
+      
+      {/* Toast Container for Notifications */}
+      <ToastContainer />
     </Card>
   );
 } 
