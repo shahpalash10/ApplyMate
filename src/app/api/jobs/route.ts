@@ -540,7 +540,7 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
   } else if (experience === 'executive') {
     return fallbackJobs.filter(job => job.title.toLowerCase().includes('director') || 
                                      job.title.toLowerCase().includes('manager') ||
-                                     job.difficulty === 'Hard');
+                                      job.difficulty === 'Hard');
   }
   
   return fallbackJobs;

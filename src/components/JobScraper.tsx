@@ -385,21 +385,21 @@ export default function JobScraper() {
             {error}
           </div>
         )}
-
+        
         {jobs.length > 0 && !isLoading && (
           <div>
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Filter by:</span>
                 {Object.entries(sourceFilters).map(([source, checked]) => (
-                  <button
-                    key={source}
+                    <button
+                      key={source}
                     className={`px-3 py-1 text-xs rounded-full flex items-center ${
                       checked
                         ? `${isDark ? 'bg-primary-700 text-primary-200' : 'bg-primary-100 text-primary-800'}`
                         : `${isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-600'}`
                     }`}
-                    onClick={() => handleSourceFilterChange(source)}
+                      onClick={() => handleSourceFilterChange(source)}
                   >
                     {source}
                     <span className={`ml-1 text-xs rounded-full inline-flex items-center justify-center w-4 h-4 ${
@@ -409,22 +409,22 @@ export default function JobScraper() {
                     }`}>
                       {sourceCounts[source] || 0}
                     </span>
-                  </button>
-                ))}
-              </div>
-              
-              <div className="flex items-center gap-2">
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'match' | 'company' | 'location')}
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as 'match' | 'company' | 'location')}
                   className={`text-sm rounded-md border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} py-1 px-2`}
                   aria-label="Sort jobs by"
-                >
+                  >
                   <option value="match">Match Score</option>
-                  <option value="company">Company</option>
-                  <option value="location">Location</option>
-                </select>
+                    <option value="company">Company</option>
+                    <option value="location">Location</option>
+                  </select>
                 
                 <Button
                   variant={selectionMode ? "primary" : "outline"}
@@ -483,21 +483,21 @@ export default function JobScraper() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                               </svg>
                               {job.company}
-                            </div>
+                      </div>
                             {job.location && (
                               <div className={`flex items-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
                                 {job.location}
-                              </div>
+                        </div>
                             )}
-                            {job.salary && (
+                        {job.salary && (
                               <div className={`flex items-center ${isDark ? 'text-green-300' : 'text-green-600'}`}>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                                 {job.salary}
                               </div>
                             )}
@@ -509,9 +509,9 @@ export default function JobScraper() {
                                   {keyword}
                                 </span>
                               ))}
-                            </div>
-                          )}
-                          
+                          </div>
+                        )}
+                        
                           {job.recommendations && (
                             <div className={`mt-3 text-sm ${isDark ? 'bg-gray-700/50 text-gray-200' : 'bg-gray-50 text-gray-700'} p-2 rounded-md`}>
                               <div className="font-medium mb-1">AI Recommendations:</div>
@@ -554,8 +554,8 @@ export default function JobScraper() {
                         {!selectionMode && job.link && (
                           <a
                             href={job.link.startsWith('http') ? job.link : `https://${job.link}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          target="_blank" 
+                          rel="noopener noreferrer"
                             className={`inline-flex items-center text-xs px-3 py-1 rounded-md ${
                               isDark 
                                 ? 'bg-primary-600 hover:bg-primary-700 text-white' 
@@ -570,12 +570,12 @@ export default function JobScraper() {
                                 alert("Sorry, this job listing has an invalid link. Try visiting the job source's website directly.");
                               }
                             }}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Apply Now
-                          </a>
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          Apply Now
+                        </a>
                         )}
                       </div>
                     </div>

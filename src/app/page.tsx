@@ -24,8 +24,8 @@ const fadeIn = {
 
 const features = [
   {
-    title: 'AI-Powered Job Matching',
-    description: 'Our advanced algorithm analyzes your skills and preferences to find the perfect AI roles for your career.',
+    title: 'Automate Job Applications',
+    description: 'Our application fetches the best jobs for you and applies automatically, saving you time and effort.',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
         <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
@@ -33,8 +33,8 @@ const features = [
     ),
   },
   {
-    title: 'Resume Enhancement',
-    description: 'Transform your resume with AI suggestions tailored to highlight relevant skills and experience for AI positions.',
+    title: 'Automated Resume Builder',
+    description: 'Our AI automatically builds a custom tailored ATS-Friendly resume for you.',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -42,8 +42,8 @@ const features = [
     ),
   },
   {
-    title: 'Skill Gap Analysis',
-    description: 'Identify your skill gaps and get personalized recommendations for courses and resources to boost your AI career.',
+    title: 'Skill Development',
+    description: 'Identify your skill gaps and get personalized recommendations for courses and resources to boost your career.',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
         <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
@@ -51,8 +51,8 @@ const features = [
     ),
   },
   {
-    title: 'Interview Preparation',
-    description: 'Practice with our AI interviewer to master technical and behavioral questions specific to AI roles.',
+    title: 'Personalised Profile',
+    description: 'We make a custom-profile for you that helps you automate your job applications.',
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
@@ -112,7 +112,7 @@ export default function Home() {
               className="mb-6"
             >
               <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300">
-                The Future of AI Careers
+                Apply Smarter, Not Harder.
               </span>
             </motion.div>
 
@@ -122,7 +122,7 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl md:text-6xl font-bold mb-6"
             >
-              Find Your Dream <span className="text-gradient">AI Career</span> With Intelligent Matching
+              One-Stop Solution for all your <span className="text-gradient">Job Applications</span>
             </motion.h1>
 
             <motion.div
@@ -158,7 +158,7 @@ export default function Home() {
                   </svg>
                 }
               >
-                <Link href="/jobs">Explore AI Jobs</Link>
+                <Link href="/jobs">Explore Jobs</Link>
               </Button>
               <Button
                 variant="outline"
@@ -169,7 +169,7 @@ export default function Home() {
                   </svg>
                 }
               >
-                <Link href="/resume">Build Your AI Resume</Link>
+                <Link href="/resume">Build Your Resume</Link>
               </Button>
             </motion.div>
           </div>
@@ -189,7 +189,7 @@ export default function Home() {
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
                   </div>
-                  <div className={`mx-auto text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>AIJobs Platform Dashboard</div>
+                  <div className={`mx-auto text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>ApplyMate Platform Dashboard</div>
                 </div>
                 <div className="pt-10 h-full animate-pulse-slow">
                   <div className={`grid grid-cols-3 gap-4 p-4 h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -232,7 +232,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-3xl md:text-4xl font-bold mb-4"
             >
-              How <span className="text-gradient">AIJobs</span> Transforms Your Career
+              How <span className="text-gradient">ApplyMate</span> Transforms Your Career
             </motion.h2>
             <motion.p 
               custom={1}
@@ -244,10 +244,10 @@ export default function Home() {
             >
               Our intelligent platform uses cutting-edge AI to optimize every aspect of your job search journey
             </motion.p>
-        </div>
+          </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
+            {features.map((feature, index) => (
               <motion.div
                 key={index}
                 custom={index + 2}
@@ -295,9 +295,9 @@ export default function Home() {
                   className="p-6"
                 >
                   <div className="mb-4">
-                    <span className="text-5xl font-bold text-gradient">94%</span>
-                </div>
-                  <p className="text-lg text-gray-600 dark:text-gray-300">Placement success rate for AI roles</p>
+                    <span className="text-5xl font-bold text-gradient">60%</span>
+                  </div>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">ApplyMate reduces your job hunt-time.</p>
                 </Card>
               </motion.div>
               
@@ -314,9 +314,9 @@ export default function Home() {
                   className="p-6"
                 >
                   <div className="mb-4">
-                    <span className="text-5xl font-bold text-gradient">10,000+</span>
-                </div>
-                  <p className="text-lg text-gray-600 dark:text-gray-300">AI positions available globally</p>
+                    <span className="text-5xl font-bold text-gradient">40%</span>
+                  </div>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">Tailored Resumes increases your Interview Chances.</p>
                 </Card>
               </motion.div>
               
@@ -333,13 +333,13 @@ export default function Home() {
                   className="p-6"
                 >
                   <div className="mb-4">
-                    <span className="text-5xl font-bold text-gradient">89%</span>
+                    <span className="text-5xl font-bold text-gradient">11 Hrs+</span>
                   </div>
-                  <p className="text-lg text-gray-600 dark:text-gray-300">Higher interview callback rate</p>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">The time it takes per week to search and apply for jobs manually.</p>
                 </Card>
               </motion.div>
-                </div>
-                </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -348,8 +348,8 @@ export default function Home() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary-500/10 rounded-full filter blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent-500/10 rounded-full filter blur-[100px] -translate-x-1/2 translate-y-1/2"></div>
-      </div>
-
+        </div>
+        
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.h2
@@ -360,7 +360,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-3xl md:text-4xl font-bold mb-6"
             >
-              Ready to Accelerate Your <span className="text-gradient">AI Career</span>?
+              Ready to Accelerate Your <span className="text-gradient">Career</span>?
             </motion.h2>
             
             <motion.p
@@ -371,7 +371,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="text-xl text-gray-600 dark:text-gray-300 mb-8"
             >
-              Join thousands of AI professionals who have found their dream jobs through our platform
+              Automate Applications so that you can focus on what matters most-your skills.
             </motion.p>
             
             <motion.div
@@ -386,7 +386,7 @@ export default function Home() {
                 <Link href="/profile">Create Your Profile</Link>
               </Button>
               <Button variant="glass" size="lg">
-                <Link href="/jobs">Browse AI Jobs</Link>
+                <Link href="/jobs">Browse Jobs</Link>
               </Button>
             </motion.div>
           </div>
