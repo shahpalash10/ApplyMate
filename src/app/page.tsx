@@ -81,7 +81,7 @@ const jobRoleAnimationStyles = `
     display: inline-block;
     overflow: hidden;
     height: 1.5em;
-    min-width: 240px; /* Increased width to accommodate longer text */
+    min-width: 270px; /* Increased width to accommodate longer text */
     vertical-align: bottom;
   }
   
