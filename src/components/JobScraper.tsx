@@ -44,6 +44,7 @@ export default function JobScraper() {
   const [selectedJobs, setSelectedJobs] = useState<JobListing[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [autoApplyModalOpen, setAutoApplyModalOpen] = useState(false);
+  const [showAutoApplyDemo, setShowAutoApplyDemo] = useState(true);
   const [userProfile, setUserProfile] = useState({
     name: '',
     email: '',
@@ -228,6 +229,82 @@ export default function JobScraper() {
       className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-200px)] overflow-hidden"
     >
       <div className="p-4 md:p-6 overflow-y-auto flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
+        {/* Auto Apply Demo Section */}
+        {showAutoApplyDemo && (
+          <div className={`mb-6 rounded-lg overflow-hidden border ${isDark ? 'border-primary-700' : 'border-primary-200'}`}>
+            <div className={`p-4 ${isDark ? 'bg-primary-900/40' : 'bg-primary-50'}`}>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <div className={`p-2 rounded-full ${isDark ? 'bg-primary-700' : 'bg-primary-100'} mr-3`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${isDark ? 'text-primary-300' : 'text-primary-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className={`text-lg font-bold ${isDark ? 'text-primary-300' : 'text-primary-700'}`}>
+                      Auto Apply Demo
+                    </h3>
+                    <p className={`text-sm ${isDark ? 'text-primary-200' : 'text-primary-600'}`}>
+                      Try our AI-powered job application assistant!
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowAutoApplyDemo(false)}
+                  className={`p-1 rounded-full ${isDark ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'}`}
+                  aria-label="Dismiss auto apply demo"
+                  title="Dismiss"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className={`p-4 ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <h4 className={`font-medium mb-2 ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>How it works:</h4>
+                  <ol className={`list-decimal pl-5 text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'} space-y-1`}>
+                    <li>Search for jobs that match your skills and preferences</li>
+                    <li>Enter "Selection Mode" and choose multiple jobs</li>
+                    <li>Click "Auto Apply" to apply to all selected jobs at once</li>
+                    <li>Our AI will prepare customized applications for each position</li>
+                  </ol>
+                </div>
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex gap-3 mb-3 justify-center md:justify-start">
+                    <Button
+                      variant={selectionMode ? "primary" : "outline"}
+                      size="sm"
+                      onClick={toggleSelectionMode}
+                      className="min-w-[120px]"
+                    >
+                      {selectionMode ? "Exit Selection" : "Enter Selection Mode"}
+                    </Button>
+                    
+                    {selectionMode && selectedJobs.length > 0 && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={openAutoApplyModal}
+                        className="min-w-[120px]"
+                      >
+                        Auto Apply ({selectedJobs.length})
+                      </Button>
+                    )}
+                  </div>
+                  <p className={`text-xs text-center md:text-left ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {selectionMode 
+                      ? "Now click on jobs below to select them for auto-apply" 
+                      : "Click 'Enter Selection Mode' to start selecting jobs"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form ref={formRef} onSubmit={handleSubmit} className={`mb-6 ${isDark ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-sm ${isDark ? 'border-gray-700' : 'border-gray-100'} border`}>
           <div className="grid md:grid-cols-3 gap-4">
             <div>

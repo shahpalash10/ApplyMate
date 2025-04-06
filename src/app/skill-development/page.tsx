@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTheme } from '@/components/ThemeProvider';
+import { motion } from 'framer-motion';
 
 interface Skill {
   id: string;
@@ -202,6 +204,7 @@ export default function SkillDevelopmentPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>("All");
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
+  const { theme } = useTheme();
   
   const categories: Category[] = ["All", "Frontend Development", "Programming Language", "Data Science", "Business", "Design", "DevOps & Cloud"];
   
@@ -213,36 +216,56 @@ export default function SkillDevelopmentPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const containerAnimation = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemAnimation = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-16">
+    <div className={`min-h-screen pt-24 pb-16 ${theme === 'dark' ? 'bg-gradient-to-b from-gray-900 to-gray-800' : 'bg-gradient-to-b from-gray-50 to-gray-100'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-transparent bg-clip-text tracking-tight">
+          <h1 className={`text-4xl md:text-5xl font-bold ${theme === 'dark' ? 'text-gradient-dark' : 'bg-gradient-to-r from-blue-600 to-indigo-700 text-transparent bg-clip-text'} tracking-tight`}>
             ✨ Skill Development Hub ✨
           </h1>
-          <p className="mt-4 text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className={`mt-4 text-xl ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'} max-w-2xl mx-auto`}>
             Discover in-demand skills, learning resources, and development paths for your career growth.
           </p>
         </div>
 
         <div className="max-w-5xl mx-auto">
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <motion.div 
+            className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl ${theme === 'dark' ? 'shadow-lg shadow-black/20' : 'shadow-md'} p-6 mb-8`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <div className="flex flex-col md:flex-row gap-4">
               <div className="md:flex-1">
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="search" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                   Search Skills
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
                   <input
                     type="text"
                     id="search"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-800"
+                    className={`block w-full pl-10 pr-3 py-2 border ${theme === 'dark' ? 'border-gray-700 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500' : 'border-gray-300 text-gray-800 focus:ring-blue-500 focus:border-blue-500'} rounded-md shadow-sm`}
                     placeholder="e.g. Python, UX Design"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -251,12 +274,12 @@ export default function SkillDevelopmentPage() {
               </div>
               
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="category" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                   Category
                 </label>
                 <select
                   id="category"
-                  className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  className={`block w-full pl-3 pr-10 py-2 border ${theme === 'dark' ? 'border-gray-700 bg-gray-700 text-white focus:ring-blue-500 focus:border-blue-500' : 'border-gray-300 text-gray-800 focus:ring-blue-500 focus:border-blue-500'} rounded-md shadow-sm`}
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value as Category)}
                 >
@@ -268,153 +291,212 @@ export default function SkillDevelopmentPage() {
                 </select>
               </div>
             </div>
-          </div>
-          
-          {/* Skills List and Detail View */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          </motion.div>
+
+          {/* Main Content */}
+          <div className="flex flex-col lg:flex-row gap-8">
             {/* Skills List */}
-            <div className="md:col-span-1 space-y-4">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Skills ({filteredSkills.length})</h2>
+            <motion.div 
+              className="lg:w-1/3"
+              variants={containerAnimation}
+              initial="hidden"
+              animate="show"
+            >
+              <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                Skills ({filteredSkills.length})
+              </h2>
               
-              {filteredSkills.length > 0 ? (
+              {filteredSkills.length === 0 ? (
+                <div className={`rounded-lg p-6 ${theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-700'} shadow-md text-center`}>
+                  No skills found for your search.
+                </div>
+              ) : (
                 <div className="space-y-3">
                   {filteredSkills.map(skill => (
-                    <button
+                    <motion.div
                       key={skill.id}
-                      className={`w-full text-left p-4 rounded-lg shadow-sm transition-colors duration-200 ${
-                        selectedSkill?.id === skill.id
-                          ? 'bg-blue-50 border border-blue-200 ring-2 ring-blue-500'
-                          : 'bg-white border border-gray-200 hover:border-blue-200 hover:bg-blue-50'
-                      }`}
+                      variants={itemAnimation}
                       onClick={() => setSelectedSkill(skill)}
+                      className={`cursor-pointer rounded-lg p-4 ${
+                        selectedSkill?.id === skill.id 
+                          ? theme === 'dark' 
+                            ? 'bg-blue-900/30 border border-blue-700'
+                            : 'bg-blue-50 border border-blue-100' 
+                          : theme === 'dark'
+                            ? 'bg-gray-800 hover:bg-gray-700' 
+                            : 'bg-white hover:bg-gray-50'
+                      } shadow-md transition-all duration-200`}
                     >
-                      <h3 className="font-semibold text-gray-900">{skill.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{skill.category}</p>
-                      <div className="flex items-center mt-2">
-                        <span className="text-xs text-white bg-blue-600 px-2 py-1 rounded-full">
-                          Demand: {skill.demand}/10
+                      <div className="flex justify-between items-center">
+                        <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{skill.name}</h3>
+                        <span className={`px-2 py-1 text-xs rounded-full ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
+                          {skill.category}
                         </span>
                       </div>
-                    </button>
+                      <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'} line-clamp-2`}>
+                        {skill.description}
+                      </p>
+                      <div className="mt-3 flex items-center gap-4">
+                        <div>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Demand</span>
+                          <div className="mt-1 h-2 w-24 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-blue-500 to-indigo-600" 
+                              style={{ width: `${skill.demand * 10}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        <div>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Difficulty</span>
+                          <div className="mt-1 h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-yellow-400 to-red-500" 
+                              style={{ width: `${skill.difficulty * 10}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-lg p-6 text-center text-gray-500">
-                  No skills match your search criteria
-                </div>
               )}
-            </div>
+            </motion.div>
             
             {/* Skill Details */}
-            <div className="md:col-span-2">
+            <div className="lg:w-2/3">
               {selectedSkill ? (
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4">
-                    <h2 className="text-xl font-bold text-white">{selectedSkill.name}</h2>
-                    <p className="text-blue-100 text-sm mt-1">{selectedSkill.category}</p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg p-6`}
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedSkill.name}</h2>
+                      <p className={`mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{selectedSkill.category}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      theme === 'dark'
+                        ? 'bg-blue-900/30 text-blue-300'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {selectedSkill.timeToLearn} to learn
+                    </span>
                   </div>
                   
-                  <div className="p-6">
-                    <p className="text-gray-700 mb-6">{selectedSkill.description}</p>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-blue-50 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-blue-800 mb-1">Market Demand</h3>
-                        <div className="flex items-center">
-                          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-blue-600 rounded-full" 
-                              style={{ width: `${selectedSkill.demand * 10}%` }}
-                            ></div>
-                          </div>
-                          <span className="ml-2 text-blue-800 font-semibold">{selectedSkill.demand}/10</span>
+                  <p className={`mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                    {selectedSkill.description}
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                      <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Market Demand</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 flex-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-600" 
+                            style={{ width: `${selectedSkill.demand * 10}%` }}
+                          ></div>
                         </div>
+                        <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {selectedSkill.demand}/10
+                        </span>
                       </div>
-                      
-                      <div className="bg-purple-50 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-purple-800 mb-1">Learning Difficulty</h3>
-                        <div className="flex items-center">
-                          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-purple-600 rounded-full" 
-                              style={{ width: `${selectedSkill.difficulty * 10}%` }}
-                            ></div>
-                          </div>
-                          <span className="ml-2 text-purple-800 font-semibold">{selectedSkill.difficulty}/10</span>
-                        </div>
-                      </div>
-                      
-                      <div className="bg-green-50 rounded-lg p-4">
-                        <h3 className="text-sm font-medium text-green-800 mb-1">Time to Learn</h3>
-                        <p className="text-green-800 font-semibold">{selectedSkill.timeToLearn}</p>
-                      </div>
+                      <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {selectedSkill.demand >= 8 
+                          ? 'High demand in the job market' 
+                          : selectedSkill.demand >= 5 
+                            ? 'Moderate demand in the job market' 
+                            : 'Lower demand in the job market'}
+                      </p>
                     </div>
                     
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Learning Resources</h3>
-                    <div className="space-y-4">
-                      {selectedSkill.resources.map((resource, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors duration-200">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-gray-900">{resource.title}</h4>
-                            <span className={`text-xs uppercase font-semibold px-2 py-1 rounded-full ${
-                              resource.type === 'free' 
-                                ? 'bg-green-100 text-green-800' 
-                                : resource.type === 'paid' 
-                                  ? 'bg-purple-100 text-purple-800'
-                                  : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {resource.type}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mt-2 mb-3">{resource.description}</p>
-                          <a 
-                            href={resource.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800"
-                          >
-                            Visit Resource
-                            <svg className="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
+                    <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-amber-50'}`}>
+                      <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Learning Difficulty</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 flex-1 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-yellow-400 to-red-500" 
+                            style={{ width: `${selectedSkill.difficulty * 10}%` }}
+                          ></div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="mt-8 border-t border-gray-200 pt-6 flex flex-wrap gap-3">
-                      <Link
-                        href="/career-path"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        Explore Career Paths
-                        <svg className="ml-2 -mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </Link>
-                      
-                      <Link
-                        href="/resume"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        Update Resume
-                        <svg className="ml-2 -mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </Link>
+                        <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {selectedSkill.difficulty}/10
+                        </span>
+                      </div>
+                      <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {selectedSkill.difficulty >= 8 
+                          ? 'Challenging to learn, requires dedication' 
+                          : selectedSkill.difficulty >= 5 
+                            ? 'Moderate difficulty, approachable with effort' 
+                            : 'Relatively easy to learn for beginners'}
+                      </p>
                     </div>
                   </div>
-                </div>
+                  
+                  <h3 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Learning Resources
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {selectedSkill.resources.map((resource, index) => (
+                      <div 
+                        key={index}
+                        className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-50'} border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-200'} transition-colors duration-200`}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {resource.title}
+                          </h4>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            resource.type === 'free'
+                              ? theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'
+                              : resource.type === 'paid'
+                                ? theme === 'dark' ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-800'
+                                : theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {resource.type.charAt(0).toUpperCase() + resource.type.slice(1)}
+                          </span>
+                        </div>
+                        <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {resource.description}
+                        </p>
+                        <a 
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center text-sm font-medium ${
+                            theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'
+                          }`}
+                        >
+                          Visit Resource
+                          <svg className="ml-1 w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
               ) : (
-                <div className="bg-white rounded-xl shadow-md p-8 flex flex-col items-center justify-center h-full">
-                  <svg className="h-16 w-16 text-gray-300 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a skill</h3>
-                  <p className="text-gray-500 text-center max-w-sm">
-                    Choose a skill from the list to view detailed information, demand metrics, and learning resources.
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`rounded-xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} shadow-lg p-8 text-center`}
+                >
+                  <div className={`mx-auto w-16 h-16 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-center mb-4`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className={`h-8 w-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    Select a Skill
+                  </h3>
+                  <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Choose a skill from the list to view detailed information and learning resources.
                   </p>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>

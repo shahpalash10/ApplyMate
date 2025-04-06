@@ -244,10 +244,10 @@ export default function Home() {
             >
               Our intelligent platform uses cutting-edge AI to optimize every aspect of your job search journey
             </motion.p>
-          </div>
+        </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
+          {features.map((feature, index) => (
               <motion.div
                 key={index}
                 custom={index + 2}
@@ -296,7 +296,7 @@ export default function Home() {
                 >
                   <div className="mb-4">
                     <span className="text-5xl font-bold text-gradient">94%</span>
-                  </div>
+                </div>
                   <p className="text-lg text-gray-600 dark:text-gray-300">Placement success rate for AI roles</p>
                 </Card>
               </motion.div>
@@ -315,7 +315,7 @@ export default function Home() {
                 >
                   <div className="mb-4">
                     <span className="text-5xl font-bold text-gradient">10,000+</span>
-                  </div>
+                </div>
                   <p className="text-lg text-gray-600 dark:text-gray-300">AI positions available globally</p>
                 </Card>
               </motion.div>
@@ -338,8 +338,8 @@ export default function Home() {
                   <p className="text-lg text-gray-600 dark:text-gray-300">Higher interview callback rate</p>
                 </Card>
               </motion.div>
-            </div>
-          </div>
+                </div>
+                </div>
         </div>
       </section>
 
@@ -348,8 +348,8 @@ export default function Home() {
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary-500/10 rounded-full filter blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent-500/10 rounded-full filter blur-[100px] -translate-x-1/2 translate-y-1/2"></div>
-        </div>
-        
+      </div>
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.h2
