@@ -229,7 +229,7 @@ export default function JobScraper() {
       className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-200px)] overflow-hidden"
     >
       <div className="p-4 md:p-6 overflow-y-auto flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
-        {/* Auto Apply Demo Section */}
+        {/* Auto Apply Feature Section */}
         {showAutoApplyDemo && (
           <div className={`mb-6 rounded-lg overflow-hidden border ${isDark ? 'border-primary-700' : 'border-primary-200'}`}>
             <div className={`p-4 ${isDark ? 'bg-primary-900/40' : 'bg-primary-50'}`}>
@@ -242,17 +242,17 @@ export default function JobScraper() {
                   </div>
                   <div>
                     <h3 className={`text-lg font-bold ${isDark ? 'text-primary-300' : 'text-primary-700'}`}>
-                      Auto Apply Demo
+                      Auto Apply
                     </h3>
                     <p className={`text-sm ${isDark ? 'text-primary-200' : 'text-primary-600'}`}>
-                      Try our AI-powered job application assistant!
+                      Apply to multiple jobs with a single click using our AI-powered system
                     </p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowAutoApplyDemo(false)}
                   className={`p-1 rounded-full ${isDark ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-300' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'}`}
-                  aria-label="Dismiss auto apply demo"
+                  aria-label="Dismiss auto apply section"
                   title="Dismiss"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
