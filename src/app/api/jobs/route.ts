@@ -170,14 +170,16 @@ async function scrapeNaukri(query: string, location?: string, experience?: strin
     if (experience) {
       // Map experience to Naukri's format
       let expValue = '0';
-      if (experience.includes('fresher') || experience.includes('0-1')) {
+      if (experience === 'internship') {
         expValue = '0';
-      } else if (experience.includes('1-3')) {
+      } else if (experience === 'entry') {
         expValue = '1';
-      } else if (experience.includes('3-5')) {
+      } else if (experience === 'mid') {
         expValue = '3';
-      } else if (experience.includes('5+')) {
+      } else if (experience === 'senior') {
         expValue = '5';
+      } else if (experience === 'executive') {
+        expValue = '10';
       }
       url += `&experience=${expValue}`;
     }
@@ -237,14 +239,16 @@ async function scrapeLinkedIn(query: string, location?: string, experience?: str
     if (experience) {
       // Map experience to LinkedIn's format
       let expFilter = '';
-      if (experience.includes('fresher') || experience.includes('0-1')) {
-        expFilter = '&f_E=1%2C2'; // Internship, Entry level
-      } else if (experience.includes('1-3')) {
+      if (experience === 'internship') {
+        expFilter = '&f_E=1'; // Internship
+      } else if (experience === 'entry') {
         expFilter = '&f_E=2'; // Entry level
-      } else if (experience.includes('3-5')) {
-        expFilter = '&f_E=3'; // Associate level
-      } else if (experience.includes('5+')) {
-        expFilter = '&f_E=4%2C5'; // Mid-Senior level, Director
+      } else if (experience === 'mid') {
+        expFilter = '&f_E=3'; // Associate/Mid level 
+      } else if (experience === 'senior') {
+        expFilter = '&f_E=4'; // Senior level
+      } else if (experience === 'executive') {
+        expFilter = '&f_E=5'; // Director/Executive
       }
       url += expFilter;
     }
@@ -302,11 +306,20 @@ async function scrapeIndeed(query: string, location?: string, experience?: strin
     }
     
     if (experience) {
-      // Map experience to Indeed's format if applicable
-      // Indeed doesn't have a direct experience filter in the URL, but we can add keywords
-      if (experience.includes('fresher') || experience.includes('0-1')) {
-        url += '&sc=0kf%3Aattr(FSME%2CEXREC)%3B';  // Entry level filter
+      // Map experience to Indeed's format
+      let expFilter = '';
+      if (experience === 'internship') {
+        expFilter = '&explvl=entry_level';
+      } else if (experience === 'entry') {
+        expFilter = '&explvl=entry_level';
+      } else if (experience === 'mid') {
+        expFilter = '&explvl=mid_level';
+      } else if (experience === 'senior') {
+        expFilter = '&explvl=senior_level';
+      } else if (experience === 'executive') {
+        expFilter = '&explvl=executive_level';
       }
+      url += expFilter;
     }
     
     console.log(`Scraping Indeed: ${url}`);
@@ -513,13 +526,21 @@ function getFallbackJobs(query: string, experience?: string): JobListing[] {
   ];
   
   // Adjust based on experience level
-  if (experience?.includes('fresher') || experience?.includes('0-1')) {
-    return fallbackJobs.filter(job => job.title.toLowerCase().includes('intern') || 
-                                      job.title.toLowerCase().includes('junior') ||
-                                      job.difficulty === 'Easy');
-  } else if (experience?.includes('5+')) {
-    return fallbackJobs.filter(job => job.title.toLowerCase().includes('senior') || 
-                                      job.difficulty === 'Hard');
+  if (experience === 'internship') {
+    return fallbackJobs.filter(job => job.title.toLowerCase().includes('intern') || job.difficulty === 'Easy');
+  } else if (experience === 'entry') {
+    return fallbackJobs.filter(job => job.title.toLowerCase().includes('junior') || job.difficulty === 'Easy');
+  } else if (experience === 'mid') {
+    return fallbackJobs.filter(job => !job.title.toLowerCase().includes('junior') && 
+                                     !job.title.toLowerCase().includes('senior') &&
+                                     !job.title.toLowerCase().includes('intern') &&
+                                     job.difficulty === 'Medium');
+  } else if (experience === 'senior') {
+    return fallbackJobs.filter(job => job.title.toLowerCase().includes('senior') || job.difficulty === 'Hard');
+  } else if (experience === 'executive') {
+    return fallbackJobs.filter(job => job.title.toLowerCase().includes('director') || 
+                                     job.title.toLowerCase().includes('manager') ||
+                                     job.difficulty === 'Hard');
   }
   
   return fallbackJobs;

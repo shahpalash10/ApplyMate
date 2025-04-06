@@ -18,6 +18,7 @@ interface ResumeData {
   email: string;
   phone: string;
   linkedin: string;
+  github: string;
   education: string;
   experience: string;
   skills: string;
@@ -25,6 +26,28 @@ interface ResumeData {
   certifications: string;
   currentField: string;
   collectedFields: string[];
+  detailedFields: string[];
+  experienceEntries: Array<{
+    company: string;
+    title: string;
+    dates: string;
+    responsibilities: string;
+    achievements: string;
+  }>;
+  projectEntries: Array<{
+    name: string;
+    description: string;
+    technologies: string;
+    outcome: string;
+  }>;
+  skillCategories: {
+    technical?: string[];
+    soft?: string[];
+    languages?: string[];
+    tools?: string[];
+    [key: string]: string[] | undefined;
+  };
+  isTechJob: boolean;
 }
 
 const initialResumeData: ResumeData = {
@@ -32,13 +55,19 @@ const initialResumeData: ResumeData = {
   email: '',
   phone: '',
   linkedin: '',
+  github: '',
   education: '',
   experience: '',
   skills: '',
   projects: '',
   certifications: '',
   currentField: 'intro',
-  collectedFields: []
+  collectedFields: [],
+  detailedFields: [],
+  experienceEntries: [],
+  projectEntries: [],
+  skillCategories: {},
+  isTechJob: false
 };
 
 export default function ConversationalResumeBuilder() {
@@ -69,6 +98,18 @@ export default function ConversationalResumeBuilder() {
       mimeType: 'image/png',
       qualityRatio: 1
     },
+    overrides: {
+      pdf: {
+        compress: true,
+        userUnit: 1.0,
+        precision: 2,
+        floatPrecision: 16
+      },
+      canvas: {
+        useCORS: true,
+        scale: 2
+      }
+    }
   });
 
   useEffect(() => {
@@ -148,6 +189,21 @@ export default function ConversationalResumeBuilder() {
       return;
     }
     
+    // Check if this is a tech job early in the conversation
+    if (!resumeData.collectedFields.includes('jobfield') && 
+        (lowerMessage.includes('tech') || 
+         lowerMessage.includes('software') ||
+         lowerMessage.includes('developer') ||
+         lowerMessage.includes('engineer') ||
+         lowerMessage.includes('data scientist') ||
+         lowerMessage.includes('programmer'))) {
+      setResumeData(prev => ({
+        ...prev,
+        isTechJob: true,
+        collectedFields: [...prev.collectedFields, 'jobfield']
+      }));
+    }
+    
     // Handle "none" or "skip" responses
     if (lowerMessage === 'none' || lowerMessage === 'skip' || lowerMessage === 'n/a') {
       // Find the first missing required field to mark as skipped
@@ -195,7 +251,7 @@ export default function ConversationalResumeBuilder() {
         });
       } else {
         // Handle optional fields or suggest generating if everything is collected
-        const optional = ["linkedin", "projects", "certifications"];
+        const optional = ["linkedin", "github", "projects", "certifications"];
         const missingOptional = optional.filter(field => !resumeData.collectedFields.includes(field));
         
         if (missingOptional.length > 0) {
@@ -216,6 +272,9 @@ export default function ConversationalResumeBuilder() {
             switch(fieldToSkip) {
               case 'linkedin':
                 updated.linkedin = 'N/A';
+                break;
+              case 'github':
+                updated.github = 'N/A';
                 break;
               case 'projects':
                 updated.projects = 'N/A';
@@ -242,7 +301,6 @@ export default function ConversationalResumeBuilder() {
     }
     
     // Extract information based on the current field we're expecting
-    // This is a basic extraction - Gemini will handle the actual conversational flow
     setResumeData(prev => {
       const updated = { ...prev };
       
@@ -271,50 +329,184 @@ export default function ConversationalResumeBuilder() {
         updated.linkedin = message.match(/linkedin\.com\/in\/[\w-]+/)?.[0] || '';
         updated.collectedFields = [...prev.collectedFields, 'linkedin'];
       }
-      // For other fields, we'll let Gemini guide the conversation
-      // If the message is more than 30 chars, it might be a detailed response about education/experience/etc.
-      else if (message.length > 30) {
-        if (!prev.collectedFields.includes('education') && 
-            (lowerMessage.includes('university') || lowerMessage.includes('college') || 
-             lowerMessage.includes('degree') || lowerMessage.includes('school'))) {
-          updated.education = message;
-          updated.collectedFields = [...prev.collectedFields, 'education'];
+      // Look for GitHub URLs for tech jobs
+      else if (prev.isTechJob && /github\.com\/[\w-]+/.test(message) && 
+               !prev.collectedFields.includes('github')) {
+        updated.github = message.match(/github\.com\/[\w-]+/)?.[0] || '';
+        updated.collectedFields = [...prev.collectedFields, 'github'];
+      }
+      // For education data
+      else if (message.length > 20 && 
+               !prev.collectedFields.includes('education') &&
+               (lowerMessage.includes('university') || 
+                lowerMessage.includes('college') || 
+                lowerMessage.includes('degree') || 
+                lowerMessage.includes('school') ||
+                lowerMessage.includes('bachelor') ||
+                lowerMessage.includes('master') ||
+                lowerMessage.includes('phd'))) {
+        updated.education = message;
+        updated.collectedFields = [...prev.collectedFields, 'education'];
+      }
+      // For work experience data
+      else if (message.length > 30 && 
+               !prev.detailedFields.includes('experience') &&
+               (lowerMessage.includes('work') || 
+                lowerMessage.includes('job') || 
+                lowerMessage.includes('company') || 
+                lowerMessage.includes('position') ||
+                lowerMessage.includes('role'))) {
+        
+        // Extract company names, job titles, and dates if possible
+        const companyPattern = /(?:at|for|with)\s+([A-Z][A-Za-z\s&]+(?:Inc\.?|LLC|Corp\.?|Company|Ltd\.?)?)/i;
+        const titlePattern = /(?:as|was|am|a)\s+([A-Z][A-Za-z\s]+(?:Engineer|Developer|Manager|Analyst|Designer|Specialist|Consultant|Director|Assistant|Coordinator|Lead|Architect))/i;
+        const datePattern = /(?:from|between|since|in)\s+(\w+\s+\d{4}|\d{4})\s+(?:to|until|through|-)\s+(\w+\s+\d{4}|\d{4}|present|now)/i;
+        
+        const companyMatch = message.match(companyPattern);
+        const titleMatch = message.match(titlePattern);
+        const dateMatch = message.match(datePattern);
+        
+        // If we can extract structured data, add it to the experienceEntries
+        if (companyMatch || titleMatch) {
+          updated.experienceEntries.push({
+            company: companyMatch ? companyMatch[1].trim() : '',
+            title: titleMatch ? titleMatch[1].trim() : '',
+            dates: dateMatch ? `${dateMatch[1]} - ${dateMatch[2]}` : '',
+            responsibilities: message,
+            achievements: ''
+          });
         }
-        else if (!prev.collectedFields.includes('experience') && 
-                 (lowerMessage.includes('work') || lowerMessage.includes('job') || 
-                  lowerMessage.includes('company') || lowerMessage.includes('position'))) {
-          updated.experience = message;
+        
+        updated.experience = updated.experience ? `${updated.experience}\n\n${message}` : message;
+        
+        if (!prev.collectedFields.includes('experience')) {
           updated.collectedFields = [...prev.collectedFields, 'experience'];
         }
-        else if (!prev.collectedFields.includes('skills') && 
-                 (lowerMessage.includes('skill') || lowerMessage.includes('proficient') || 
-                  lowerMessage.includes('expertise'))) {
-          updated.skills = message;
-          updated.collectedFields = [...prev.collectedFields, 'skills'];
-        }
-        else if (!prev.collectedFields.includes('projects') && 
-                 (lowerMessage.includes('project') || lowerMessage.includes('built') || 
-                  lowerMessage.includes('created') || lowerMessage.includes('developed'))) {
-          updated.projects = message;
-          updated.collectedFields = [...prev.collectedFields, 'projects'];
-        }
-        else if (!prev.collectedFields.includes('certifications') && 
-                 (lowerMessage.includes('certification') || lowerMessage.includes('certified') || 
-                  lowerMessage.includes('certificate'))) {
-          updated.certifications = message;
-          updated.collectedFields = [...prev.collectedFields, 'certifications'];
-        }
-        // Look for location information in the message
-        else if (message.length > 10 && 
-                 (lowerMessage.includes('live in') || lowerMessage.includes('located in') || 
-                  lowerMessage.includes('based in') || lowerMessage.includes('from '))) {
-          // If there's a location in the message, add it to the experience field for the resume generator
-          // This is a simple approach - the AI will extract the location when generating the resume
-          if (!prev.collectedFields.includes('experience')) {
-            updated.experience = `Location: ${message}`;
-            updated.collectedFields = [...prev.collectedFields, 'experience'];
+        
+        // Mark that we've collected detailed experience info
+        updated.detailedFields = [...prev.detailedFields, 'experience'];
+      }
+      // For skills data
+      else if (message.length > 10 && !prev.collectedFields.includes('skills') && 
+               (lowerMessage.includes('skill') || 
+                lowerMessage.includes('proficient') || 
+                lowerMessage.includes('expertise') ||
+                message.includes(','))) {
+        
+        // Try to categorize skills
+        const technicalSkills = [
+          'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'ruby', 'php',
+          'html', 'css', 'sql', 'nosql', 'react', 'angular', 'vue', 'node', 'express',
+          'django', 'flask', 'spring', 'aws', 'azure', 'gcp', 'docker', 'kubernetes',
+          'tensorflow', 'pytorch', 'machine learning', 'data science', 'ai', 'blockchain'
+        ];
+        
+        const softSkills = [
+          'communication', 'teamwork', 'leadership', 'problem solving', 'critical thinking',
+          'time management', 'adaptability', 'creativity', 'collaboration', 'decision making'
+        ];
+        
+        const skillsByCategory: {[key: string]: string[]} = {};
+        
+        // Split the skills by commas, semicolons, and "and"
+        const skillsList = message.split(/,|;|\sand\s/).map(s => s.trim());
+        
+        skillsList.forEach(skill => {
+          const lowerSkill = skill.toLowerCase();
+          
+          // Categorize the skill
+          if (technicalSkills.some(ts => lowerSkill.includes(ts))) {
+            if (!skillsByCategory.technical) skillsByCategory.technical = [];
+            skillsByCategory.technical.push(skill);
+          } else if (softSkills.some(ss => lowerSkill.includes(ss))) {
+            if (!skillsByCategory.soft) skillsByCategory.soft = [];
+            skillsByCategory.soft.push(skill);
+          } else if (lowerSkill.includes('language') || 
+                     ['english', 'spanish', 'french', 'german', 'chinese', 'japanese'].some(l => lowerSkill.includes(l))) {
+            if (!skillsByCategory.languages) skillsByCategory.languages = [];
+            skillsByCategory.languages.push(skill);
           } else {
-            updated.experience = `${prev.experience}. Location: ${message}`;
+            if (!skillsByCategory.other) skillsByCategory.other = [];
+            skillsByCategory.other.push(skill);
+          }
+        });
+        
+        updated.skills = message;
+        updated.skillCategories = {...prev.skillCategories, ...skillsByCategory};
+        updated.collectedFields = [...prev.collectedFields, 'skills'];
+      }
+      // For projects data
+      else if (message.length > 30 && !prev.collectedFields.includes('projects') && 
+               (lowerMessage.includes('project') || 
+                lowerMessage.includes('built') || 
+                lowerMessage.includes('created') || 
+                lowerMessage.includes('developed'))) {
+        
+        // Try to extract project name and technologies
+        const projectNamePattern = /(?:called|named|titled)\s+["']?([A-Za-z0-9\s]+)["']?/i;
+        const techPattern = /(?:using|with|in)\s+([A-Za-z0-9,\s]+(?:and [A-Za-z0-9\s]+)?)/i;
+        
+        const projectNameMatch = message.match(projectNamePattern);
+        const techMatch = message.match(techPattern);
+        
+        if (projectNameMatch) {
+          updated.projectEntries.push({
+            name: projectNameMatch[1].trim(),
+            description: message,
+            technologies: techMatch ? techMatch[1].trim() : '',
+            outcome: ''
+          });
+        }
+        
+        updated.projects = message;
+        updated.collectedFields = [...prev.collectedFields, 'projects'];
+      }
+      // For certifications data
+      else if (message.length > 10 && !prev.collectedFields.includes('certifications') && 
+               (lowerMessage.includes('certification') || 
+                lowerMessage.includes('certified') || 
+                lowerMessage.includes('certificate'))) {
+        updated.certifications = message;
+        updated.collectedFields = [...prev.collectedFields, 'certifications'];
+      }
+      // Additional context for existing fields - add to what we've already collected
+      else if (prev.collectedFields.includes('experience') && 
+               message.length > 20 &&
+               (lowerMessage.includes('responsible') || 
+                lowerMessage.includes('achievement') || 
+                lowerMessage.includes('accomplishment') ||
+                lowerMessage.includes('managed') ||
+                lowerMessage.includes('led') ||
+                lowerMessage.includes('developed') ||
+                lowerMessage.includes('created') ||
+                lowerMessage.includes('implemented'))) {
+        
+        // Add to experience with formatting
+        updated.experience = `${prev.experience}\n\n${message}`;
+        
+        // If we have experienceEntries, add this as an achievement to the latest entry
+        if (updated.experienceEntries.length > 0) {
+          const lastIndex = updated.experienceEntries.length - 1;
+          updated.experienceEntries[lastIndex].achievements += message + '\n';
+        }
+      }
+      // Add technologies or outcomes to existing projects
+      else if (prev.collectedFields.includes('projects') && 
+               message.length > 10 &&
+               (lowerMessage.includes('technology') || 
+                lowerMessage.includes('tool') || 
+                lowerMessage.includes('outcome') ||
+                lowerMessage.includes('result'))) {
+        
+        updated.projects = `${prev.projects}\n\n${message}`;
+        
+        // If we have projectEntries, add this as additional info to the latest entry
+        if (updated.projectEntries.length > 0) {
+          const lastIndex = updated.projectEntries.length - 1;
+          if (lowerMessage.includes('technology') || lowerMessage.includes('tool')) {
+            updated.projectEntries[lastIndex].technologies += message + '\n';
+          } else {
+            updated.projectEntries[lastIndex].outcome += message + '\n';
           }
         }
       }
@@ -369,11 +561,69 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
     if (fields.includes('email')) context += `Email: ${resumeData.email}\n`;
     if (fields.includes('phone')) context += `Phone: ${resumeData.phone}\n`;
     if (fields.includes('linkedin')) context += `LinkedIn: ${resumeData.linkedin}\n`;
-    if (fields.includes('education')) context += `Education: ${resumeData.education}\n`;
-    if (fields.includes('experience')) context += `Experience: ${resumeData.experience}\n`;
-    if (fields.includes('skills')) context += `Skills: ${resumeData.skills}\n`;
-    if (fields.includes('projects')) context += `Projects: ${resumeData.projects}\n`;
+    if (fields.includes('github')) context += `GitHub: ${resumeData.github}\n`;
+    
+    // Add detailed education data if available
+    if (fields.includes('education')) {
+      context += `Education: ${resumeData.education}\n`;
+    }
+    
+    // Add detailed experience data
+    if (fields.includes('experience')) {
+      context += `Experience: ${resumeData.experience}\n`;
+      
+      // Add structured experience data if available
+      if (resumeData.experienceEntries.length > 0) {
+        context += "Structured Experience Data:\n";
+        resumeData.experienceEntries.forEach((entry, index) => {
+          context += `  Entry ${index + 1}:\n`;
+          if (entry.company) context += `    Company: ${entry.company}\n`;
+          if (entry.title) context += `    Title: ${entry.title}\n`;
+          if (entry.dates) context += `    Dates: ${entry.dates}\n`;
+          if (entry.responsibilities) context += `    Responsibilities: ${entry.responsibilities}\n`;
+          if (entry.achievements) context += `    Achievements: ${entry.achievements}\n`;
+        });
+      }
+    }
+    
+    // Add detailed skills data with categories
+    if (fields.includes('skills')) {
+      context += `Skills: ${resumeData.skills}\n`;
+      
+      // Add categorized skills if available
+      if (Object.keys(resumeData.skillCategories).length > 0) {
+        context += "Categorized Skills:\n";
+        Object.entries(resumeData.skillCategories).forEach(([category, skills]) => {
+          if (skills && skills.length > 0) {
+            context += `  ${category.charAt(0).toUpperCase() + category.slice(1)}: ${skills.join(', ')}\n`;
+          }
+        });
+      }
+    }
+    
+    // Add detailed project data
+    if (fields.includes('projects')) {
+      context += `Projects: ${resumeData.projects}\n`;
+      
+      // Add structured project data if available
+      if (resumeData.projectEntries.length > 0) {
+        context += "Structured Project Data:\n";
+        resumeData.projectEntries.forEach((project, index) => {
+          context += `  Project ${index + 1}:\n`;
+          if (project.name) context += `    Name: ${project.name}\n`;
+          if (project.description) context += `    Description: ${project.description}\n`;
+          if (project.technologies) context += `    Technologies: ${project.technologies}\n`;
+          if (project.outcome) context += `    Outcome: ${project.outcome}\n`;
+        });
+      }
+    }
+    
     if (fields.includes('certifications')) context += `Certifications: ${resumeData.certifications}\n`;
+    
+    // Indicate if this is a tech job
+    if (resumeData.isTechJob) {
+      context += "Note: User is looking for a technical/software role.\n";
+    }
     
     context += "\nMISSING:\n";
     const missing: string[] = [];
@@ -384,18 +634,38 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
     if (!fields.includes('experience')) missing.push("Experience");
     if (!fields.includes('skills')) missing.push("Skills");
     if (!fields.includes('linkedin')) missing.push("LinkedIn (optional)");
+    if (resumeData.isTechJob && !fields.includes('github')) missing.push("GitHub (recommended for tech jobs)");
     if (!fields.includes('projects')) missing.push("Projects (optional)");
     if (!fields.includes('certifications')) missing.push("Certifications (optional)");
     
     context += missing.join(", ") + "\n\n";
     
-    if (isReadyToGenerateResume()) {
+    // Specific follow-up instructions based on what we've collected
+    if (fields.includes('experience') && !resumeData.detailedFields.includes('experience')) {
+      context += "INSTRUCTION: Ask for specific achievements, metrics, and responsibilities for their experience. Focus on quantifiable results, technologies used, and impact.\n";
+    }
+    else if (fields.includes('projects') && resumeData.projectEntries.length > 0 && 
+             (!resumeData.projectEntries[resumeData.projectEntries.length - 1].technologies || 
+              !resumeData.projectEntries[resumeData.projectEntries.length - 1].outcome)) {
+      context += "INSTRUCTION: Ask about specific technologies used in their latest project and outcomes/results achieved.\n";
+    }
+    else if (isReadyToGenerateResume()) {
       context += "INSTRUCTION: All essential info collected. Suggest generating the resume now.\n";
     } else {
       const required: string[] = ["Name", "Email", "Phone", "Education", "Experience", "Skills"];
       const missingRequired = required.filter(item => missing.includes(item) || missing.includes(`${item} (optional)`));
       if (missingRequired.length > 0) {
         context += `INSTRUCTION: Ask for ${missingRequired[0]} specifically. Remind they can type 'none' to skip.\n`;
+      }
+      
+      // If we're collecting skills, suggest organizing by category
+      if (missingRequired[0] === "Skills") {
+        context += "For skills, ask them to separate technical skills, soft skills, and tools/languages if applicable.\n";
+      }
+      
+      // If we're collecting experience, ask for structured information
+      if (missingRequired[0] === "Experience") {
+        context += "For experience, ask for company names, job titles, dates, and specific responsibilities.\n";
       }
     }
     
@@ -433,16 +703,40 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
     }]);
     
     try {
+      // Choose between LaTeX and Markdown generation based on the structured data quality
+      const useStructuredTemplate = 
+        resumeData.experienceEntries.length > 0 ||
+        resumeData.projectEntries.length > 0 || 
+        Object.keys(resumeData.skillCategories).length > 0;
+      
+      let apiPayload;
+      
+      if (useStructuredTemplate) {
+        // Use structured template approach
+        apiPayload = {
+          isResumeRequest: true,
+          useStructuredTemplate: true,
+          resumeData: {
+            ...resumeData,
+            template: generateLatexTemplate()
+          },
+          message: ''
+        };
+      } else {
+        // Use the standard AI generation approach
+        apiPayload = {
+          isResumeRequest: true,
+          resumeData,
+          message: ''
+        };
+      }
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          isResumeRequest: true, 
-          resumeData,
-          message: '' 
-        }),
+        body: JSON.stringify(apiPayload),
       });
 
       const data = await response.json();
@@ -470,6 +764,78 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
       setIsGeneratingResume(false);
     }
   };
+  
+  // Function to generate a LaTeX template based on collected user data
+  const generateLatexTemplate = (): string => {
+    const name = resumeData.name || '';
+    const email = resumeData.email || '';
+    const phone = resumeData.phone || '';
+    const linkedin = resumeData.linkedin || '';
+    const github = resumeData.github || '';
+    
+    // Extract location if available (usually from education or experience)
+    let location = '';
+    if (resumeData.experience.includes('located in') || resumeData.experience.includes('based in')) {
+      const locationMatch = resumeData.experience.match(/(?:located|based) in ([^,.]+)/i);
+      if (locationMatch && locationMatch[1]) {
+        location = locationMatch[1].trim();
+      }
+    }
+    
+    // Create a basic template with placeholders for dynamic content
+    let template = `% ATS-FRIENDLY RESUME TEMPLATE
+% This LaTeX-based template is optimized for ATS systems
+\\documentclass[11pt,letterpaper]{article}
+\\usepackage[empty]{fullpage}
+\\usepackage{hyperref}
+\\usepackage{enumitem}
+\\usepackage[margin=0.75in]{geometry}
+\\usepackage{titlesec}
+
+% Define colors and styling
+\\usepackage{xcolor}
+\\definecolor{primary}{HTML}{0066cc}
+\\definecolor{secondary}{HTML}{444444}
+
+% Custom section styling
+\\titleformat{\\section}{\\normalfont\\Large\\bfseries}{}{0em}{\\color{primary}}[\\titlerule]
+\\titlespacing*{\\section}{0pt}{12pt}{8pt}
+
+\\begin{document}
+
+% HEADER
+\\begin{center}
+    {\\LARGE\\textbf{${name}}}\\\\[0.5em]
+    ${location ? location + ' $\\cdot$ ' : ''}${phone} $\\cdot$ \\href{mailto:${email}}{${email}}${linkedin ? ' $\\cdot$ \\href{https://' + linkedin + '}{' + linkedin + '}' : ''}${github ? ' $\\cdot$ \\href{https://' + github + '}{' + github + '}' : ''}
+\\end{center}
+
+% PROFESSIONAL SUMMARY
+\\section{Professional Summary}
+% Will be filled by AI based on experience and skills
+
+% EXPERIENCE SECTION
+\\section{Professional Experience}
+% EXPERIENCE_PLACEHOLDER
+
+% EDUCATION SECTION  
+\\section{Education}
+% EDUCATION_PLACEHOLDER
+
+% SKILLS SECTION
+\\section{Skills}
+% SKILLS_PLACEHOLDER
+
+% PROJECTS SECTION
+${resumeData.projects ? '\\section{Projects}\n% PROJECTS_PLACEHOLDER' : ''}
+
+% CERTIFICATIONS SECTION
+${resumeData.certifications ? '\\section{Certifications}\n% CERTIFICATIONS_PLACEHOLDER' : ''}
+
+\\end{document}
+`;
+    
+    return template;
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -491,6 +857,74 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
       text: "Let's start fresh! I'll help you create an ATS-friendly resume. What's your name? ✨ (Type 'none' to skip any field or 'generate' anytime to create your resume)", 
       isUser: false 
     }]);
+  };
+
+  // Check if the content is LaTeX
+  const isLatexContent = (content: string): boolean => {
+    return content.includes('\\documentclass') && 
+           content.includes('\\begin{document}') && 
+           content.includes('\\end{document}');
+  };
+  
+  // Convert LaTeX to presentable HTML (for preview only)
+  const convertLatexToHtml = (latex: string): string => {
+    // This is a simple converter for preview only - real LaTeX to PDF conversion
+    // would typically be done server-side or via a dedicated library
+    
+    // First, extract the document content (remove preamble)
+    const documentMatch = latex.match(/\\begin{document}([\s\S]*)\\end{document}/);
+    const documentContent = documentMatch ? documentMatch[1] : latex;
+    
+    let html = documentContent
+      // Remove LaTeX comments
+      .replace(/%.+$/gm, '')
+      
+      // Section headers
+      .replace(/\\section{([^}]+)}/g, '<h2 class="text-xl font-bold text-primary-600 border-b border-primary-300 pb-1 mb-3 mt-6">$1</h2>')
+      .replace(/\\subsection{([^}]+)}/g, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
+      
+      // Text formatting
+      .replace(/\\textbf{([^}]+)}/g, '<strong>$1</strong>')
+      .replace(/\\textit{([^}]+)}/g, '<em>$1</em>')
+      .replace(/\\underline{([^}]+)}/g, '<u>$1</u>')
+      
+      // Lists
+      .replace(/\\begin{itemize}(\[.*?\])?/g, '<ul class="list-disc pl-5 space-y-1">')
+      .replace(/\\end{itemize}/g, '</ul>')
+      .replace(/\\item\s+/g, '<li>')
+      .replace(/\\item\s+([^\n]+)\n/g, '<li>$1</li>\n')
+      
+      // Layout
+      .replace(/\\begin{center}([\s\S]*?)\\end{center}/g, '<div class="text-center">$1</div>')
+      .replace(/\\hfill/g, '<span class="ml-auto"></span>')
+      
+      // Links
+      .replace(/\\href{([^}]+)}{([^}]+)}/g, '<a href="$1" class="text-blue-600 hover:underline">$2</a>')
+      
+      // Special characters and spacing
+      .replace(/\\\\/g, '<br>')
+      .replace(/\\&/g, '&amp;')
+      .replace(/\\\$/g, '$')
+      .replace(/\\%/g, '%')
+      .replace(/\s*{\\LARGE\\textbf{([^}]+)}}/g, '<h1 class="text-3xl font-bold text-center mb-4">$1</h1>')
+      .replace(/\[0\.5em\]/g, '<div class="h-2"></div>')
+      
+      // Fix dots in contact section
+      .replace(/\$\\cdot\$/g, '<span class="mx-1">•</span>');
+    
+    // Clean up any remaining LaTeX commands
+    html = html.replace(/\\[a-zA-Z]+(\{[^}]*\})?/g, '');
+    
+    // Wrap in a container for proper styling
+    return `<div class="latex-preview">${html}</div>`;
+  };
+
+  // Function to handle PDF download
+  const handleDownloadPDF = () => {
+    // Set a small timeout to ensure content is fully rendered
+    setTimeout(() => {
+      toPDF();
+    }, 200);
   };
 
   return (
@@ -590,11 +1024,18 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
               ref={targetRef} 
               className={`p-8 border ${isDark ? 'border-gray-700 bg-white' : 'border-gray-200 bg-white'} rounded-lg mb-6 text-black`}
             >
-              <div className="prose prose-sm max-w-none">
-                <ReactMarkdown>
-                  {generatedResume}
-                </ReactMarkdown>
-              </div>
+              {isLatexContent(generatedResume) ? (
+                <div 
+                  className="prose prose-sm max-w-none" 
+                  dangerouslySetInnerHTML={{ __html: convertLatexToHtml(generatedResume) }}
+                />
+              ) : (
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown>
+                    {generatedResume}
+                  </ReactMarkdown>
+                </div>
+              )}
             </div>
             
             <div className="flex justify-between">
@@ -604,12 +1045,30 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
               >
                 Back to Chat
               </Button>
-              <Button 
-                onClick={() => toPDF()} 
-                variant="primary"
-              >
-                Download PDF
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(generatedResume)
+                      .then(() => {
+                        alert("Resume content copied to clipboard!");
+                      })
+                      .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert("Failed to copy content. Please try again.");
+                      });
+                  }} 
+                  variant="outline"
+                >
+                  Copy to Clipboard
+                </Button>
+                <Button 
+                  onClick={handleDownloadPDF} 
+                  variant="primary"
+                >
+                  Download PDF
+                </Button>
+              </div>
             </div>
           </div>
         </div>
