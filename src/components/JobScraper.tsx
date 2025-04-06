@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useTheme } from './ThemeProvider';
 import CoverLetterModal from './CoverLetterModal';
+import AutoApplyModal from './AutoApplyModal';
+import { Card } from './ui/Card';
+import { Button } from './ui/Button';
 
 interface JobListing {
   title: string;
@@ -18,6 +22,7 @@ interface JobListing {
 }
 
 export default function JobScraper() {
+  const { isDark } = useTheme();
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
   const [experience, setExperience] = useState('');
@@ -36,7 +41,50 @@ export default function JobScraper() {
   });
   const [coverLetterModalOpen, setCoverLetterModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
+  const [selectedJobs, setSelectedJobs] = useState<JobListing[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [autoApplyModalOpen, setAutoApplyModalOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    resumeUrl: ''
+  });
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Load user profile from localStorage on component mount
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('userProfile');
+    if (savedProfile) {
+      try {
+        const parsedProfile = JSON.parse(savedProfile);
+        setUserProfile(parsedProfile);
+      } catch (err) {
+        console.error('Error parsing saved profile:', err);
+      }
+    }
+  }, []);
+
+  // Save user profile when updated by AutoApplyModal
+  const handleProfileUpdate = (updatedProfile: {
+    name: string; 
+    email: string; 
+    phone: string; 
+    resumeUrl?: string;
+  }) => {
+    setUserProfile({
+      name: updatedProfile.name || '',
+      email: updatedProfile.email || '',
+      phone: updatedProfile.phone || '',
+      resumeUrl: updatedProfile.resumeUrl || ''
+    });
+    localStorage.setItem('userProfile', JSON.stringify({
+      name: updatedProfile.name || '',
+      email: updatedProfile.email || '',
+      phone: updatedProfile.phone || '',
+      resumeUrl: updatedProfile.resumeUrl || ''
+    }));
+  };
 
   // Filter jobs when source filters or jobs change
   useEffect(() => {
@@ -75,6 +123,8 @@ export default function JobScraper() {
     setIsLoading(true);
     setError('');
     setJobs([]);
+    setSelectedJobs([]);
+    setSelectionMode(false);
     
     try {
       const response = await fetch('/api/jobs', {
@@ -123,9 +173,6 @@ export default function JobScraper() {
     // Use the provided job or the default empty job
     const jobData = job || defaultJob;
     
-    // Log for debugging
-    console.log("Opening cover letter modal with job:", JSON.stringify(jobData, null, 2));
-    
     // Create a sanitized version with guaranteed values (even if empty)
     setSelectedJob({
       ...jobData,
@@ -143,23 +190,48 @@ export default function JobScraper() {
     setCoverLetterModalOpen(false);
   };
 
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    if (selectionMode) {
+      setSelectedJobs([]);
+    }
+  };
+
+  const toggleJobSelection = (job: JobListing) => {
+    if (!selectionMode) return;
+    
+    setSelectedJobs(prev => {
+      const isSelected = prev.some(j => j.title === job.title && j.company === job.company);
+      if (isSelected) {
+        return prev.filter(j => !(j.title === job.title && j.company === job.company));
+      } else {
+        return [...prev, job];
+      }
+    });
+  };
+
+  const isJobSelected = (job: JobListing) => {
+    return selectedJobs.some(j => j.title === job.title && j.company === job.company);
+  };
+
+  const openAutoApplyModal = () => {
+    setAutoApplyModalOpen(true);
+  };
+
+  const closeAutoApplyModal = () => {
+    setAutoApplyModalOpen(false);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-100px)] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-xl overflow-hidden border border-gray-200">
-      <div className="p-4 md:p-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          Job Search Wizard ✨
-        </h2>
-        <p className="text-blue-100 mt-1 text-sm md:text-base">Find your dream job with AI-powered search</p>
-      </div>
-      
+    <Card 
+      variant={isDark ? "glass" : "default"}
+      className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-200px)] overflow-hidden"
+    >
       <div className="p-4 md:p-6 overflow-y-auto flex-1 pb-16" style={{ WebkitOverflowScrolling: 'touch' }}>
-        <form ref={formRef} onSubmit={handleSubmit} className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+        <form ref={formRef} onSubmit={handleSubmit} className={`mb-6 ${isDark ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-sm ${isDark ? 'border-gray-700' : 'border-gray-100'} border`}>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
-              <label htmlFor="query" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="query" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                 Job Title / Role
               </label>
               <input
@@ -168,12 +240,12 @@ export default function JobScraper() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="e.g. Software Engineer, Product Manager"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                className={`w-full border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500`}
                 required
               />
             </div>
             <div>
-              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="location" className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
                 Location (Optional)
               </label>
               <input
@@ -182,276 +254,219 @@ export default function JobScraper() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Bangalore, Remote"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                className={`w-full border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500`}
               />
             </div>
-            <div>
-              <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-1">
-                Experience (Optional)
-              </label>
-              <select
-                id="experience"
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+            <div className="flex items-end">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full h-10"
+                disabled={isLoading}
               >
-                <option value="">Any Experience</option>
-                <option value="fresher">Fresher</option>
-                <option value="0-1 years">0-1 Years</option>
-                <option value="1-3 years">1-3 Years</option>
-                <option value="3-5 years">3-5 Years</option>
-                <option value="5+ years">5+ Years</option>
-              </select>
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Searching...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search Jobs
+                  </span>
+                )}
+              </Button>
             </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              disabled={isLoading || !query.trim()}
-              className={`px-4 py-2 rounded-lg ${
-                isLoading || !query.trim()
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md'
-              } transition-all duration-200`}
-            >
-              {isLoading ? (
-                <div className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Searching...
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Find Jobs
-                </div>
-              )}
-            </button>
           </div>
         </form>
-        
-        {isLoading && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 mb-6">
-            <div className="text-center mb-4">
-              <div className="flex justify-center mb-2">
-                <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">Searching for jobs</h3>
-              <p className="text-gray-600">Crawling multiple job sites to find the best matches for you...</p>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {Object.keys(sourceFilters).map(source => (
-                <div key={source} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-800">{source}</span>
-                    <span className="flex h-3 w-3">
-                      <span className="animate-ping absolute h-3 w-3 rounded-full bg-blue-400 opacity-75"></span>
-                      <span className="relative rounded-full h-3 w-3 bg-blue-500"></span>
-                    </span>
-                  </div>
-                  <div className="text-xs text-gray-500">Searching...</div>
-                </div>
-              ))}
-            </div>
+
+        {error && (
+          <div className={`p-4 mb-6 ${isDark ? 'bg-red-900/40 text-red-200' : 'bg-red-50 text-red-800'} rounded-lg border ${isDark ? 'border-red-800' : 'border-red-200'}`}>
+            {error}
           </div>
         )}
 
-        {error && (
-          <div className="text-center py-8">
-            <div className="text-red-500 mb-2">{error}</div>
-            <button
-              onClick={() => formRef.current?.reset()}
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              Try a different search
-            </button>
-          </div>
-        )}
-        
-        {jobs.length > 0 && (
-          <div className="space-y-4 md:space-y-6">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium text-gray-900">Found {filteredJobs.length} job listings</h3>
-              
-              <button
-                onClick={() => openCoverLetterModal()}
-                className="inline-flex items-center px-3 py-1.5 border border-indigo-500 text-indigo-600 rounded-md text-sm hover:bg-indigo-50 transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Create Cover Letter
-              </button>
-            </div>
-            
-            <div className="flex flex-col md:flex-row md:flex-wrap md:items-center md:justify-between sticky top-0 bg-white p-3 md:p-4 rounded-lg shadow-sm z-10 border border-gray-100">
-              <div className="text-base md:text-lg font-medium text-gray-800 mb-2">
-                Found {jobs.length} job{jobs.length !== 1 ? 's' : ''} matching your search
-              </div>
-              
-              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
-                <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
-                  {Object.entries(sourceFilters).map(([source, isActive]) => (
-                    <button 
-                      key={source}
-                      onClick={() => handleSourceFilterChange(source)}
-                      className={`px-2 py-1 rounded-md text-xs flex items-center ${
-                        isActive 
-                          ? 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200' 
-                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                      }`}
-                    >
-                      <span className={`w-2 h-2 rounded-full mr-1 ${isActive ? 'bg-indigo-500' : 'bg-gray-400'}`}></span>
-                      {source}
-                      {sourceCounts[source] > 0 && (
-                        <span className={`ml-1 px-1 rounded-full text-xs ${
-                          isActive ? 'bg-indigo-200 text-indigo-800' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {sourceCounts[source]}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-xs md:text-sm text-gray-600">Sort:</span>
-                  <select 
-                    id="sortBy"
-                    aria-label="Sort jobs by"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as 'match' | 'company' | 'location')}
-                    className="text-xs px-2 md:px-3 py-1 rounded-md border border-gray-200 text-gray-800"
+        {jobs.length > 0 && !isLoading && (
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Filter by:</span>
+                {Object.entries(sourceFilters).map(([source, checked]) => (
+                  <button
+                    key={source}
+                    className={`px-3 py-1 text-xs rounded-full flex items-center ${
+                      checked
+                        ? `${isDark ? 'bg-primary-700 text-primary-200' : 'bg-primary-100 text-primary-800'}`
+                        : `${isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-600'}`
+                    }`}
+                    onClick={() => handleSourceFilterChange(source)}
                   >
-                    <option value="match">Best Match</option>
-                    <option value="company">Company</option>
-                    <option value="location">Location</option>
-                  </select>
-                </div>
+                    {source}
+                    <span className={`ml-1 text-xs rounded-full inline-flex items-center justify-center w-4 h-4 ${
+                      checked
+                        ? `${isDark ? 'bg-primary-800 text-primary-300' : 'bg-primary-200 text-primary-800'}`
+                        : `${isDark ? 'bg-gray-800 text-gray-400' : 'bg-gray-300 text-gray-700'}`
+                    }`}>
+                      {sourceCounts[source] || 0}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'match' | 'company' | 'location')}
+                  className={`text-sm rounded-md border ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} py-1 px-2`}
+                  aria-label="Sort jobs by"
+                >
+                  <option value="match">Match Score</option>
+                  <option value="company">Company</option>
+                  <option value="location">Location</option>
+                </select>
+                
+                <Button
+                  variant={selectionMode ? "primary" : "outline"}
+                  size="sm"
+                  className="ml-2"
+                  onClick={toggleSelectionMode}
+                >
+                  {selectionMode ? "Exit Selection" : "Select Jobs"}
+                </Button>
+                
+                {selectionMode && selectedJobs.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={openAutoApplyModal}
+                  >
+                    Auto Apply ({selectedJobs.length})
+                  </Button>
+                )}
               </div>
             </div>
             
-            <div className="grid gap-4 md:gap-6 pb-10">
+            <div className="space-y-4">
               {filteredJobs.length > 0 ? (
                 filteredJobs.map((job, index) => (
-                  <div key={index} className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <div className="p-4 md:p-5">
+                  <div 
+                    key={`${job.title}-${job.company}-${index}`}
+                    className={`${isDark ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-gray-300'} border rounded-lg transition-all duration-200 shadow-sm ${
+                      selectionMode && isJobSelected(job) ? `${isDark ? 'ring-2 ring-primary-500' : 'ring-2 ring-primary-500'}` : ''
+                    } ${selectionMode ? 'cursor-pointer' : ''}`}
+                    onClick={() => selectionMode && toggleJobSelection(job)}
+                  >
+                    <div className="p-4">
                       <div className="flex justify-between items-start">
-                        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-1">{job.title}</h3>
-                        {job.match_score && (
-                          <div className={`text-xs md:text-sm font-medium px-2 py-1 rounded-full ml-2 ${
-                            job.match_score >= 80 ? 'bg-green-100 text-green-800' :
-                            job.match_score >= 60 ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
+                        <div className="flex-grow">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h3 className={`text-base md:text-lg font-bold ${isDark ? 'text-gray-100' : 'text-gray-900'}`}>
+                              {job.title}
+                            </h3>
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${
+                              job.match_score && job.match_score > 80
+                                ? `${isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'}`
+                                : job.match_score && job.match_score > 60
+                                  ? `${isDark ? 'bg-yellow-900/30 text-yellow-300' : 'bg-yellow-100 text-yellow-800'}`
+                                  : `${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`
+                            }`}>
+                              {job.match_score ? `${job.match_score}% Match` : 'No Match Score'}
+                            </span>
+                            <span className={`px-2 py-0.5 text-xs rounded-full ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
+                              {job.source}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-y-1 gap-x-4 text-sm mb-2">
+                            <div className={`flex items-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                              {job.company}
+                            </div>
+                            {job.location && (
+                              <div className={`flex items-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                {job.location}
+                              </div>
+                            )}
+                            {job.salary && (
+                              <div className={`flex items-center ${isDark ? 'text-green-300' : 'text-green-600'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {job.salary}
+                              </div>
+                            )}
+                          </div>
+                          {job.keywords && job.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {job.keywords.map((keyword, i) => (
+                                <span key={i} className={`px-2 py-0.5 text-xs rounded-full ${isDark ? 'bg-primary-900/30 text-primary-300' : 'bg-primary-50 text-primary-700'}`}>
+                                  {keyword}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {job.recommendations && (
+                            <div className={`mt-3 text-sm ${isDark ? 'bg-gray-700/50 text-gray-200' : 'bg-gray-50 text-gray-700'} p-2 rounded-md`}>
+                              <div className="font-medium mb-1">AI Recommendations:</div>
+                              <div className="prose-sm max-w-none">
+                                <ReactMarkdown>
+                                  {job.recommendations}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {selectionMode && (
+                          <div className={`ml-2 rounded-full w-5 h-5 flex-shrink-0 border ${
+                            isJobSelected(job) 
+                              ? `${isDark ? 'bg-primary-600 border-primary-500' : 'bg-primary-600 border-primary-500'}`
+                              : `${isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`
                           }`}>
-                            {job.match_score}% Match
+                            {isJobSelected(job) && (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
                           </div>
                         )}
                       </div>
-                      
-                      <div className="text-gray-600 text-xs md:text-sm mb-2">{job.company}</div>
-                      
-                      <div className="flex flex-wrap gap-1 md:gap-2 mb-2">
-                        <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span className="truncate max-w-[150px]">{job.location}</span>
-                        </div>
-                        
-                        {job.salary && (
-                          <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="truncate max-w-[120px]">{job.salary}</span>
-                          </div>
-                        )}
-                        
-                        <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          job.source === 'LinkedIn' ? 'bg-blue-100 text-blue-800' :
-                          job.source === 'Naukri' ? 'bg-purple-100 text-purple-800' :
-                          job.source === 'Internshala' ? 'bg-green-100 text-green-800' :
-                          'bg-indigo-100 text-indigo-800'
-                        }`}>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                          {job.source}
-                        </div>
-                        
-                        {job.difficulty && (
-                          <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            job.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                            job.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {job.difficulty}
-                          </div>
-                        )}
-                      </div>
-                      
-                      {job.keywords && job.keywords.length > 0 && (
-                        <div className="mb-2">
-                          <div className="text-xs text-gray-500 mb-1">Keywords:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {job.keywords.map((keyword, kIndex) => (
-                              <span 
-                                key={kIndex} 
-                                className="inline-block px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700"
-                              >
-                                {keyword}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {job.recommendations && (
-                        <div className="mt-2 p-2 md:p-3 bg-blue-50 rounded-md text-xs md:text-sm text-blue-800">
-                          <div className="font-medium mb-1">AI Recommendations:</div>
-                          <div className="text-xs md:text-sm">
-                            <ReactMarkdown>{job.recommendations}</ReactMarkdown>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-xs text-gray-500 inline-flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Source: {job.source}
-                          </span>
-                          <button
+                      <div className="flex justify-end gap-2 mt-3">
+                        {!selectionMode && (
+                          <Button
+                            variant="outline" 
+                            size="sm"
                             onClick={() => openCoverLetterModal(job)}
-                            className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center"
-                            aria-label={`Generate cover letter for ${job.title} at ${job.company}`}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Generate Cover Letter
-                          </button>
-                        </div>
-                        {job.link && (
-                          <a 
-                            href={job.link.startsWith('http') ? job.link : `https://${job.link}`} 
-                            target="_blank" 
+                            Create Cover Letter
+                          </Button>
+                        )}
+                        {!selectionMode && job.link && (
+                          <a
+                            href={job.link.startsWith('http') ? job.link : `https://${job.link}`}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 border border-transparent rounded-md shadow-sm text-xs md:text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+                            className={`inline-flex items-center text-xs px-3 py-1 rounded-md ${
+                              isDark 
+                                ? 'bg-primary-600 hover:bg-primary-700 text-white' 
+                                : 'bg-primary-600 hover:bg-primary-700 text-white'
+                            }`}
                             onClick={(e) => {
-                              // Validate the URL before attempting to open
                               try {
                                 // Check if we have a valid URL
                                 new URL(job.link.startsWith('http') ? job.link : `https://${job.link}`);
@@ -472,40 +487,51 @@ export default function JobScraper() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
-                  <p className="text-gray-500">No jobs match your current filters. Try adjusting your filter settings.</p>
-                </div>
+                <Card className="text-center py-8">
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-500'}`}>No jobs match your current filters. Try adjusting your filter settings.</p>
+                </Card>
               )}
             </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-4 mb-8">
+            <Card variant="glass" className="mt-4 mb-8 p-4">
               <div className="flex items-start">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${isDark ? 'text-primary-400' : 'text-primary-600'} mt-0.5 mr-2`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <h4 className="text-sm font-medium text-blue-800 mb-1">About the "Apply Now" links</h4>
-                  <p className="text-xs text-blue-700">
+                  <h4 className={`text-sm font-medium ${isDark ? 'text-primary-300' : 'text-primary-700'} mb-1`}>About the "Apply Now" links</h4>
+                  <p className={`text-xs ${isDark ? 'text-primary-200' : 'text-primary-600'}`}>
                     Clicking "Apply Now" will take you directly to the original job posting on the respective job site. If you encounter any issues with a link, try searching for the job directly on the source website.
                   </p>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         )}
       </div>
       
       {/* Cover Letter Modal */}
-      {selectedJob && (
+      {coverLetterModalOpen && selectedJob && (
         <CoverLetterModal
           isOpen={coverLetterModalOpen}
           onClose={closeCoverLetterModal}
-          jobTitle={selectedJob.title}
-          company={selectedJob.company}
-          location={selectedJob.location}
-          keywords={selectedJob.keywords}
+          jobTitle={selectedJob?.title || ''}
+          company={selectedJob?.company || ''}
+          location={selectedJob?.location || ''}
+          keywords={selectedJob?.keywords || []}
         />
       )}
-    </div>
+
+      {/* Auto Apply Modal */}
+      {autoApplyModalOpen && (
+        <AutoApplyModal
+          isOpen={autoApplyModalOpen}
+          onClose={closeAutoApplyModal}
+          selectedJobs={selectedJobs}
+          userProfile={userProfile}
+          onProfileUpdate={handleProfileUpdate}
+        />
+      )}
+    </Card>
   );
 } 

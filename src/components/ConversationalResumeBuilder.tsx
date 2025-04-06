@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { usePDF } from 'react-to-pdf';
+import { useTheme } from './ThemeProvider';
+import { Button } from './ui/Button';
 
 interface Message {
   text: string;
@@ -40,6 +42,7 @@ const initialResumeData: ResumeData = {
 };
 
 export default function ConversationalResumeBuilder() {
+  const { isDark } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 'welcome',
@@ -491,7 +494,7 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col h-[calc(100vh-200px)] bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-xl overflow-hidden border border-gray-200">
+    <div className={`flex flex-col h-[calc(100vh-16rem)] overflow-hidden ${isDark ? 'text-white' : 'text-gray-900'}`}>
       <div className="p-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
         <h2 className="text-2xl font-bold tracking-tight flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -502,130 +505,115 @@ Always remind users they can type 'none' to skip fields or 'generate' anytime to
         <p className="text-blue-100 mt-1">Let's craft an amazing resume through a fun conversation!</p>
       </div>
       
-      <div className="flex-1 p-6 overflow-y-auto bg-gradient-to-b from-gray-50 to-white">
-        <div className="space-y-6">
+      <div className={`flex-1 p-4 overflow-y-auto ${isDark ? 'bg-gray-800/40' : 'bg-white'}`}>
+        <div className="max-w-3xl mx-auto">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} items-start`}
+            <div 
+              key={message.id} 
+              className={`mb-4 flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
             >
-              {!message.isUser && (
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white mr-3 shadow-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-              )}
-              
-              <div
-                className={`max-w-[75%] rounded-2xl p-4 shadow-sm ${
-                  message.isUser
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none'
-                    : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'
-                } ${message.isLoading ? 'min-w-[100px]' : ''}`}
+              <div 
+                className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                  message.isUser 
+                    ? `${isDark ? 'bg-primary-700 text-white' : 'bg-primary-600 text-white'}` 
+                    : `${isDark ? 'bg-gray-700 text-gray-100' : 'bg-gray-100 text-gray-800'}`
+                } ${message.isLoading ? 'animate-pulse' : ''}`}
               >
-                {message.isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="h-2.5 w-2.5 bg-blue-400 rounded-full animate-bounce"></div>
-                    <div className="h-2.5 w-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="h-2.5 w-2.5 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                {message.text.includes('```') ? (
+                  <div className="prose dark:prose-invert max-w-none">
+                    <ReactMarkdown>
+                      {message.text}
+                    </ReactMarkdown>
                   </div>
                 ) : (
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{message.text}</ReactMarkdown>
-                  </div>
+                  <div className="whitespace-pre-wrap">{message.text}</div>
                 )}
               </div>
-              
-              {message.isUser && (
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white ml-3 shadow-md">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              )}
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
-        <div ref={messagesEndRef} />
       </div>
       
-      {showResume && (
-        <div className="p-6 border-t border-gray-200 bg-white">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Your ATS-Friendly Resume
-            </h3>
-            <button
-              onClick={() => toPDF()}
-              className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-md flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Download ATS-Friendly PDF
-            </button>
-          </div>
-          <div 
-            ref={targetRef} 
-            className="border border-gray-200 rounded-lg p-8 bg-white max-h-[600px] overflow-y-auto shadow-inner mt-4"
-          >
-            <div className="prose prose-black text-black max-w-none pt-4 prose-headings:mb-4 prose-headings:mt-6 prose-p:my-2 prose-li:my-0 prose-h1:text-3xl prose-h2:text-xl prose-h2:border-b prose-h2:pb-2 prose-h2:border-gray-200">
-              <ReactMarkdown>{generatedResume}</ReactMarkdown>
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button
-              onClick={resetBuilder}
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-md flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Create New Resume
-            </button>
-          </div>
-        </div>
-      )}
-      
-      <div className="p-4 bg-white border-t border-gray-200">
-        <div className="flex space-x-2 items-center">
+      <div className={`p-4 border-t ${isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'}`}>
+        <div className="max-w-3xl mx-auto flex">
           <input
             ref={inputRef}
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
+            placeholder="Type your message here..."
+            className={`flex-1 p-3 rounded-l-lg ${
+              isDark 
+                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            } border focus:outline-none focus:ring-2 focus:ring-primary-500`}
             onKeyDown={handleKeyPress}
-            placeholder={isTyping ? "Wait..." : "Type your answer here..."}
-            className="flex-1 border border-gray-300 rounded-full px-6 py-3 text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm bg-gray-50"
-            disabled={isGeneratingResume || isTyping}
+            disabled={isTyping || isGeneratingResume}
           />
-          <button
+          <Button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isGeneratingResume || isTyping}
-            className={`rounded-full p-3 shadow-md transition-all duration-200 flex items-center justify-center ${
-              !inputMessage.trim() || isGeneratingResume || isTyping
-                ? 'bg-gray-300 text-gray-500'
-                : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700'
-            }`}
+            disabled={!inputMessage.trim() || isTyping || isGeneratingResume}
+            variant="primary"
+            className="rounded-l-none"
           >
-            {isGeneratingResume ? (
-              <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            )}
-          </button>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+          </Button>
         </div>
       </div>
-      <p className="text-gray-500 text-sm text-center my-4">Don&apos;t see the right sections? Just tell me what you want to include.</p>
+
+      {showResume && (
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDark ? 'bg-black/80' : 'bg-gray-500/75'}`}>
+          <div className={`relative w-full max-w-4xl max-h-[90vh] overflow-auto rounded-lg ${isDark ? 'bg-gray-800' : 'bg-white'} p-6`}>
+            <button 
+              onClick={() => setShowResume(false)}
+              className={`absolute top-4 right-4 p-2 rounded-full ${
+                isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              aria-label="Close resume preview"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="mb-6 text-center">
+              <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} mb-2`}>Your Resume Preview</h2>
+              <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Review your resume below. You can download it as a PDF or go back to make changes.
+              </p>
+            </div>
+            
+            <div 
+              ref={targetRef} 
+              className={`p-8 border ${isDark ? 'border-gray-700 bg-white' : 'border-gray-200 bg-white'} rounded-lg mb-6 text-black`}
+            >
+              <div className="prose prose-sm max-w-none">
+                <ReactMarkdown>
+                  {generatedResume}
+                </ReactMarkdown>
+              </div>
+            </div>
+            
+            <div className="flex justify-between">
+              <Button 
+                onClick={() => setShowResume(false)} 
+                variant="outline"
+              >
+                Back to Chat
+              </Button>
+              <Button 
+                onClick={() => toPDF()} 
+                variant="primary"
+              >
+                Download PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

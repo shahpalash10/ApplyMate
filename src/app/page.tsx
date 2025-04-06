@@ -1,164 +1,397 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import ChatWidget from '@/components/ChatWidget';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { useTheme } from '@/components/ThemeProvider';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
-interface Feature {
-  title: string;
-  description: string;
-  link: string;
-  icon: React.ReactNode;
-  external?: boolean;
-}
+// Define animation variants
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: 0.1 * i,
+      duration: 0.5,
+      ease: [0.4, 0, 0.2, 1],
+    },
+  }),
+};
 
-const features: Feature[] = [
+const features = [
   {
-    title: '✨ Resume Wizard',
-    description: 'Turn your experience into an impressive resume with the help of our magical AI assistant.',
-    link: '/resume',
+    title: 'AI-Powered Job Matching',
+    description: 'Our advanced algorithm analyzes your skills and preferences to find the perfect AI roles for your career.',
     icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
       </svg>
-    )
+    ),
   },
   {
-    title: 'Cover Letter Generator',
-    description: 'Create personalized cover letters tailored to specific job descriptions in seconds.',
-    link: '/cover-letter',
+    title: 'Resume Enhancement',
+    description: 'Transform your resume with AI suggestions tailored to highlight relevant skills and experience for AI positions.',
     icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
       </svg>
-    )
+    ),
+  },
+  {
+    title: 'Skill Gap Analysis',
+    description: 'Identify your skill gaps and get personalized recommendations for courses and resources to boost your AI career.',
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+      </svg>
+    ),
   },
   {
     title: 'Interview Preparation',
-    description: 'Practice common interview questions and receive feedback on your responses.',
-    link: 'https://cognicore.vercel.app/',
-    external: true,
+    description: 'Practice with our AI interviewer to master technical and behavioral questions specific to AI roles.',
     icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+        <path fillRule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clipRule="evenodd" />
       </svg>
-    )
-  },
-  {
-    title: '✨ Job Search Wizard',
-    description: 'Find your perfect job with our AI-powered job scraper that searches multiple platforms.',
-    link: '/jobs',
-    icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    )
-  },
-  {
-    title: 'Skill Development',
-    description: 'Identify in-demand skills for your industry and get personalized learning resources.',
-    link: '/skill-development',
-    icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    )
-  },
-  {
-    title: 'Career Path Planning',
-    description: 'Receive guidance on career progression and skill development opportunities.',
-    link: '/career-path',
-    icon: (
-      <svg className="h-6 w-6 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-      </svg>
-    )
+    ),
   },
 ];
 
+const jobRoles = [
+  'Machine Learning Engineer',
+  'Data Scientist',
+  'AI Research Scientist',
+  'NLP Engineer',
+  'Computer Vision Engineer',
+  'AI Ethics Researcher',
+  'Robotics Engineer',
+  'Deep Learning Specialist',
+  'AI Product Manager',
+  'MLOps Engineer',
+];
+
 export default function Home() {
+  const { isDark } = useTheme();
+  const [currentJobIndex, setCurrentJobIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Auto-rotate job titles
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentJobIndex((prev) => (prev + 1) % jobRoles.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Set visibility for animation when component mounts
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 text-transparent bg-clip-text sm:text-5xl md:text-6xl">
-            ✨ ApplyMate ✨
-          </h1>
-          <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600">
-            Your magical career companion. Get expert guidance on resumes, interviews, and career development!
-          </p>
-          <div className="mt-8">
-            <Link 
-              href="/resume" 
-              className="px-8 py-3 text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 md:py-4 md:text-lg md:px-10 shadow-md transition-all duration-200"
+    <div className="min-h-screen overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-20 md:py-32 overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className={`absolute inset-0 ${isDark ? 'grid-pattern-dark' : 'grid-pattern'} opacity-30`}></div>
+          <div className="absolute top-0 left-1/4 w-1/2 h-1/2 bg-primary-500/20 rounded-full filter blur-[100px] -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-1/4 w-1/2 h-1/2 bg-accent-500/20 rounded-full filter blur-[100px] translate-y-1/2"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-5xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              transition={{ duration: 0.5 }}
+              className="mb-6"
             >
-              Begin the Magic ✨
-            </Link>
-            <div className="mt-4 text-sm text-gray-500">
-              <a 
-                href="https://ai.google.dev/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-blue-600 hover:text-blue-800 transition-colors"
+              <span className="inline-block px-4 py-1.5 rounded-full text-sm font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300">
+                The Future of AI Careers
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl md:text-6xl font-bold mb-6"
+            >
+              Find Your Dream <span className="text-gradient">AI Career</span> With Intelligent Matching
+            </motion.h1>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="h-12 mb-8"
+            >
+              <p className="text-xl text-gray-600 dark:text-gray-300">
+                Discover the perfect role as a{' '}
+                <span className="relative inline-block overflow-hidden h-[1.5em] align-bottom w-56">
+                  <span className="text-primary-600 dark:text-primary-400 font-semibold whitespace-nowrap absolute left-0 transition-transform duration-500 ease-in-out" style={{ transform: `translateY(${currentJobIndex * -100}%)` }}>
+                    {jobRoles.map((role, index) => (
+                      <span key={index} className="block h-[1.5em]">{role}</span>
+                    ))}
+                  </span>
+                </span>
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 20 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            >
+              <Button
+                variant="primary"
+                size="lg"
+                icon={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                  </svg>
+                }
               >
-                Set up a Gemini API key
-              </a>{" "}
-              for full AI functionality
+                <Link href="/jobs">Explore AI Jobs</Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                icon={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                }
+              >
+                <Link href="/resume">Build Your AI Resume</Link>
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* 3D-like mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: isVisible ? 1 : 0, y: isVisible ? 0 : 40 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="mt-16 relative max-w-4xl mx-auto"
+          >
+            <div className="aspect-[16/9] rounded-xl overflow-hidden shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+              <div className={`w-full h-full ${isDark ? 'bg-gray-800' : 'bg-white'} rounded-xl overflow-hidden relative border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className={`absolute top-0 left-0 right-0 h-10 ${isDark ? 'bg-gray-900' : 'bg-gray-100'} flex items-center px-4`}>
+                  <div className="flex space-x-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  </div>
+                  <div className={`mx-auto text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>AIJobs Platform Dashboard</div>
+                </div>
+                <div className="pt-10 h-full animate-pulse-slow">
+                  <div className={`grid grid-cols-3 gap-4 p-4 h-full ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+                    <div className={`col-span-1 ${isDark ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <div className={`h-4 w-2/3 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-3`}></div>
+                      <div className={`h-24 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-3`}></div>
+                      <div className={`h-4 w-1/2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-3`}></div>
+                      <div className={`h-4 w-3/4 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded`}></div>
+                    </div>
+                    <div className={`col-span-2 ${isDark ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <div className={`h-4 w-1/3 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded mb-3`}></div>
+                      <div className={`grid grid-cols-2 gap-3`}>
+                        <div className={`h-20 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded`}></div>
+                        <div className={`h-20 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded`}></div>
+                        <div className={`h-20 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded`}></div>
+                        <div className={`h-20 ${isDark ? 'bg-gray-700' : 'bg-gray-200'} rounded`}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-accent-500/30 rounded-full filter blur-xl animate-pulse-slow"></div>
+            <div className="absolute -top-4 -left-8 w-16 h-16 bg-primary-500/30 rounded-full filter blur-xl animate-pulse-slow"></div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20 relative">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <motion.h2 
+              custom={0}
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold mb-4"
+            >
+              How <span className="text-gradient">AIJobs</span> Transforms Your Career
+            </motion.h2>
+            <motion.p 
+              custom={1}
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto"
+            >
+              Our intelligent platform uses cutting-edge AI to optimize every aspect of your job search journey
+            </motion.p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                custom={index + 2}
+                variants={fadeIn}
+                initial="initial"
+                whileInView="animate"
+                viewport={{ once: true }}
+              >
+                <Card 
+                  variant={isDark ? "glass" : "neumorphic"} 
+                  className="h-full p-6"
+                  hoverEffect
+                >
+                  <div className={`w-12 h-12 rounded-lg mb-5 flex items-center justify-center ${
+                    isDark 
+                      ? 'bg-primary-900/50 text-primary-400' 
+                      : 'bg-primary-100 text-primary-600'
+                  }`}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                  <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{feature.description}</p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className={`py-20 ${isDark ? 'bg-gray-900/50' : 'bg-gray-50/50'}`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-8">
+              <motion.div
+                custom={0}
+                variants={fadeIn}
+                initial="initial"
+                whileInView="animate"
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <Card 
+                  variant="glass" 
+                  className="p-6"
+                >
+                  <div className="mb-4">
+                    <span className="text-5xl font-bold text-gradient">94%</span>
+                  </div>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">Placement success rate for AI roles</p>
+                </Card>
+              </motion.div>
+              
+              <motion.div
+                custom={1}
+                variants={fadeIn}
+                initial="initial"
+                whileInView="animate"
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <Card 
+                  variant="glass" 
+                  className="p-6"
+                >
+                  <div className="mb-4">
+                    <span className="text-5xl font-bold text-gradient">10,000+</span>
+                  </div>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">AI positions available globally</p>
+                </Card>
+              </motion.div>
+              
+              <motion.div
+                custom={2}
+                variants={fadeIn}
+                initial="initial"
+                whileInView="animate"
+                viewport={{ once: true }}
+                className="text-center"
+              >
+                <Card 
+                  variant="glass" 
+                  className="p-6"
+                >
+                  <div className="mb-4">
+                    <span className="text-5xl font-bold text-gradient">89%</span>
+                  </div>
+                  <p className="text-lg text-gray-600 dark:text-gray-300">Higher interview callback rate</p>
+                </Card>
+              </motion.div>
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="mt-20 grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
-            feature.external ? (
-              <a 
-                key={index}
-                href={feature.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-gray-100"
-              >
-                <div className="p-6 flex-1">
-                  <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5 group-hover:bg-blue-100 transition-colors duration-200">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
-                <div className="px-6 py-4 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-200 flex items-center text-blue-600 font-medium">
-                  <span>Visit now</span>
-                  <svg className="h-4 w-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </div>
-              </a>
-            ) : (
-              <Link 
-                key={index}
-                href={feature.link}
-                className="group flex flex-col bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-gray-100"
-              >
-                <div className="p-6 flex-1">
-                  <div className="h-12 w-12 bg-blue-50 rounded-xl flex items-center justify-center mb-5 group-hover:bg-blue-100 transition-colors duration-200">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors duration-200">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
-                <div className="px-6 py-4 bg-gray-50 group-hover:bg-gray-100 transition-colors duration-200 flex items-center text-blue-600 font-medium">
-                  <span>Try it now</span>
-                  <svg className="h-4 w-4 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </div>
-              </Link>
-            )
-          ))}
+      {/* CTA Section */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-primary-500/10 rounded-full filter blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent-500/10 rounded-full filter blur-[100px] -translate-x-1/2 translate-y-1/2"></div>
         </div>
-      </div>
-
-      <ChatWidget />
-    </main>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.h2
+              custom={0}
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold mb-6"
+            >
+              Ready to Accelerate Your <span className="text-gradient">AI Career</span>?
+            </motion.h2>
+            
+            <motion.p
+              custom={1}
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-xl text-gray-600 dark:text-gray-300 mb-8"
+            >
+              Join thousands of AI professionals who have found their dream jobs through our platform
+            </motion.p>
+            
+            <motion.div
+              custom={2}
+              variants={fadeIn}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Button variant="primary" size="lg">
+                <Link href="/profile">Create Your Profile</Link>
+              </Button>
+              <Button variant="glass" size="lg">
+                <Link href="/jobs">Browse AI Jobs</Link>
+              </Button>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
