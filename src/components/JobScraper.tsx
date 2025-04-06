@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useTheme } from './ThemeProvider';
 import CoverLetterModal from './CoverLetterModal';
@@ -256,7 +256,7 @@ export default function JobScraper() {
     setAutoApplyModalOpen(false);
   };
 
-  const toggleNotification = (e: React.MouseEvent, job: JobListing) => {
+  const toggleNotification = useCallback((e: React.MouseEvent, job: JobListing) => {
     e.stopPropagation(); // Prevent job selection when clicking notification button
     
     setJobsWithNotifications(prev => {
@@ -279,7 +279,7 @@ export default function JobScraper() {
       
       return newNotifications;
     });
-  };
+  }, []);
 
   const isNotificationEnabled = (job: JobListing) => {
     const jobId = `${job.title}-${job.company}`;

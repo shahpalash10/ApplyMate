@@ -14,25 +14,28 @@ let setToastsState: React.Dispatch<React.SetStateAction<ToastProps[]>> | null = 
 
 // Function to add a toast notification
 export const toast = (props: ToastProps) => {
-  if (setToastsState) {
-    const newToast = {
-      title: props.title,
-      description: props.description || '',
-      status: props.status || 'info',
-      duration: props.duration || 3000,
-      isClosable: props.isClosable !== undefined ? props.isClosable : true,
-    };
-    
-    toasts = [...toasts, newToast];
-    setToastsState([...toasts]);
-
-    // Auto remove toast after duration
-    if (props.duration !== 0) {
-      setTimeout(() => {
-        removeToast(toasts.length - 1);
-      }, props.duration || 3000);
+  // Use setTimeout to move the state update outside of the render cycle
+  setTimeout(() => {
+    if (setToastsState) {
+      const newToast = {
+        title: props.title,
+        description: props.description || '',
+        status: props.status || 'info',
+        duration: props.duration || 3000,
+        isClosable: props.isClosable !== undefined ? props.isClosable : true,
+      };
+      
+      toasts = [...toasts, newToast];
+      setToastsState([...toasts]);
+  
+      // Auto remove toast after duration
+      if (props.duration !== 0) {
+        setTimeout(() => {
+          removeToast(toasts.length - 1);
+        }, props.duration || 3000);
+      }
     }
-  }
+  }, 0);
 };
 
 // Function to remove a toast
