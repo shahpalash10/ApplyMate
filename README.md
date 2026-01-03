@@ -1,4 +1,4 @@
-# Apply Mate - Find Your Dream Career
+# ApplyMate - AI Job Application Assistant
 
 An AI-powered platform that connects professionals with cutting-edge job opportunities. Built with Next.js, React, Tailwind CSS, and framer-motion.
 
@@ -54,4 +54,4 @@ An AI-powered platform that connects professionals with cutting-edge job opportu
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details
